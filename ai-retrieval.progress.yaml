@@ -1,0 +1,58 @@
+subject: AI Retrieval
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   lexical-search, embeddings, chunking, knowledge-graphs.
+# Recommended first step: lexical-search, then embeddings.
+mastery:
+  - id: lexical-search
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: embeddings
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: chunking
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: knowledge-graphs
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: vector-similarity
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: vector-store
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: basic-rag
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: retrieval-evaluation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: reranking
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: query-transformation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: hybrid-retrieval
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: graph-rag
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: chunking-strategies
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

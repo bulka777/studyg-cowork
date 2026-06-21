@@ -1,0 +1,139 @@
+subject: AI Retrieval
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Recommended entry order among the tier-1 roots: lexical-search -> embeddings (keyword search motivates why semantic search exists).
+concepts:
+  - id: lexical-search
+    name: Lexical (Keyword) Search
+    summary: Finding documents by matching the query's terms, ranked by term importance.
+    objective: Explain how keyword search retrieves and ranks documents, and where it falls short.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Matches documents containing the query's terms via an inverted index
+      - Ranks by term importance (TF-IDF / BM25 intuition - rare, frequent terms weigh more)
+      - Strong on exact and rare terms; blind to synonyms and meaning
+
+  - id: embeddings
+    name: Embeddings
+    summary: Numeric vector representations of text that place similar meanings near each other.
+    objective: Explain what an embedding is and why nearby vectors imply related meaning.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Embeddings map text to fixed-length numeric vectors
+      - Closeness in vector space reflects semantic similarity
+      - They come from a learned model, not hand-designed features
+
+  - id: chunking
+    name: Chunking
+    summary: Splitting documents into passages small enough to embed and retrieve usefully.
+    objective: Explain why documents are chunked and the tradeoffs of chunk size.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Documents are split into passages before embedding
+      - Chunk size trades off context completeness against retrieval precision
+
+  - id: knowledge-graphs
+    name: Knowledge Graphs
+    summary: Representing information as entities and the relationships between them.
+    objective: Explain what a knowledge graph is and what relationships add over plain text.
+    prereqs: []
+    tier: 1
+    rubric:
+      - A knowledge graph stores entities and typed relationships
+      - Relationships capture structure that flat text leaves implicit
+
+  - id: vector-similarity
+    name: Vector Similarity & Nearest Neighbors
+    summary: Measuring closeness between vectors (e.g. cosine) to find the most related items.
+    objective: Describe how similarity search retrieves the closest vectors to a query.
+    prereqs: [embeddings]
+    tier: 2
+    rubric:
+      - A similarity measure (e.g. cosine) scores how close two vectors are
+      - Retrieval means finding the nearest vectors to a query vector
+      - Exact nearest-neighbor is costly, motivating approximate methods
+
+  - id: vector-store
+    name: Vector Store
+    summary: A system that indexes embeddings for fast approximate nearest-neighbor search.
+    objective: Explain what a vector store does and why approximate search is used.
+    prereqs: [vector-similarity]
+    tier: 3
+    rubric:
+      - A vector store indexes embeddings for fast retrieval
+      - Approximate nearest-neighbor trades a little accuracy for large speed gains
+
+  - id: basic-rag
+    name: Basic RAG
+    summary: Retrieve relevant passages, then condition generation on them.
+    objective: Walk through the retrieve-then-generate pipeline and why it reduces hallucination.
+    prereqs: [chunking, vector-store]   # embeddings is implied transitively via vector-store
+    tier: 4
+    rubric:
+      - Retrieval selects passages relevant to the query
+      - Retrieved context is fed to the generator as grounding
+      - Grounding in real passages reduces unsupported output
+
+  - id: retrieval-evaluation
+    name: Retrieval Evaluation
+    summary: Measuring retrieval quality with metrics like recall and precision.
+    objective: Explain how to tell whether a retrieval step is actually working.
+    prereqs: [basic-rag]
+    tier: 5
+    rubric:
+      - Retrieval quality can be measured, not just assumed
+      - Recall and precision capture different failure modes
+
+  - id: reranking
+    name: Reranking
+    summary: A second-stage model reorders retrieved candidates by relevance.
+    objective: Explain why a reranker improves on first-stage retrieval.
+    prereqs: [basic-rag]   # recommended after retrieval-evaluation (tier), not required by it
+    tier: 5
+    rubric:
+      - First-stage retrieval favors recall and speed over precision
+      - A reranker rescores top candidates for final ordering
+
+  - id: query-transformation
+    name: Query Transformation
+    summary: Rewriting or expanding the query to retrieve better passages.
+    objective: Describe techniques that reshape a query before retrieval and why they help.
+    prereqs: [basic-rag]
+    tier: 5
+    rubric:
+      - A raw user query is often not the best retrieval query
+      - Rewriting/expansion improves match with relevant passages
+
+  - id: hybrid-retrieval
+    name: Hybrid Retrieval
+    summary: Combining lexical (keyword) search with vector search for better recall.
+    objective: Explain why mixing keyword and vector retrieval beats either alone.
+    prereqs: [basic-rag, lexical-search]   # genuinely needs BOTH halves
+    tier: 5
+    rubric:
+      - Lexical search excels at exact terms; vector search at meaning
+      - Combining them improves recall across query types
+
+  - id: graph-rag
+    name: GraphRAG
+    summary: Retrieval that uses a knowledge graph's structure, not just isolated passages.
+    objective: Explain how graph structure improves retrieval for multi-hop or global questions.
+    prereqs: [basic-rag, knowledge-graphs]
+    tier: 5
+    rubric:
+      - GraphRAG retrieves over connected entities, not just nearby passages
+      - Graph structure helps multi-hop and whole-corpus questions
+      - It complements, rather than replaces, vector retrieval
+
+  - id: chunking-strategies
+    name: Advanced Chunking Strategies
+    summary: Structure-aware and overlapping chunking informed by evaluation.
+    objective: Compare chunking strategies and justify a choice using evaluation.
+    prereqs: [chunking, retrieval-evaluation]   # evaluation is a HARD prereq: the rubric demands it
+    tier: 6
+    rubric:
+      - Strategies include overlap, structure-aware, and semantic chunking
+      - The right choice is justified by retrieval evaluation, not guesswork
