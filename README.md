@@ -25,10 +25,11 @@ The agent reads your concept map and progress at the start of each session and w
 - `status` — where you are across subjects.
 - `learn <subject>` / `next` — take the next step along the map (depth).
 - `test <concept>` — skip straight to the Socratic check for a concept you've already studied.
-- `digest` — curate today's news against your concept map (breadth).
+- `assess <subject>` — placement interview: calibrate your progress from your actual starting point, not from scratch.
+- `digest` / `digest <subject>` — curate today's news against your concept map (breadth).
 - `deep dive <n>` — generate a grounded interactive explainer for an item.
 - `review` — run due spaced-recall cards.
-- `add subject <name>` — generate a new concept map.
+- `add subject <name>` — generate a new concept map, then immediately runs `assess`.
 
 ## Good to know
 

@@ -5,44 +5,46 @@ subject: Software System Design
 # Recommended first step: client-server, then latency-throughput.
 mastery:
   - id: client-server
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: latency-throughput
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "assess 2026-06-23: Inverted p99 definition (said 1% complete within 800ms; correct is 1% take longer than 800ms). Did not articulate that batching/queuing/concurrency are the mechanisms trading latency vs throughput."
   - id: data-models
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: statelessness
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: scaling
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: caching
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: replication
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "assess 2026-06-23: Framed async crash risk as staleness; actual risk is permanent data loss for writes acknowledged by primary but not yet propagated to replicas. Also missing leader/follower topology and multi-region replication."
   - id: indexing
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: api-design
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: load-balancing
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: partitioning
     state: unseen
@@ -53,24 +55,26 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: cap-theorem
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "assess 2026-06-23: Called P 'Partition Failure' rather than Partition Tolerance. Gave binary framing; missed that the C/A tradeoff is only forced during an active partition, and that real systems tune along a spectrum."
   - id: microservices
     state: unseen
     last_reviewed: null
     misconceptions: []
   - id: consistency-models
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "assess 2026-06-23: Missing intermediate consistency models (read-your-writes, monotonic reads) and linearizability as the strongest form."
   - id: transactions-acid
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: blob-storage
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: cdn
     state: unseen

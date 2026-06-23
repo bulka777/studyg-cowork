@@ -1,0 +1,194 @@
+subject: Investing
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: how markets and instruments work — equities, bonds, funds, derivatives, market
+# structure, liquidity, and pricing — a broad tour of the machinery rather than portfolio strategy.
+# Educational/conceptual only; this teaches how things work, not what to buy.
+# Recommended entry order among the tier-1 roots: financial-markets -> risk-return -> money-time-value.
+concepts:
+  - id: money-time-value
+    name: Time Value of Money
+    summary: A dollar today is worth more than a dollar later, because it can earn a return in between.
+    objective: Explain present and future value and why money has a time value.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Money available now can be invested to grow, so it outvalues the same sum later
+      - Discounting converts future cash flows to a present value
+      - The discount rate reflects opportunity cost and risk
+
+  - id: risk-return
+    name: Risk & Return
+    summary: Higher expected returns come bundled with greater uncertainty about the outcome.
+    objective: Explain the risk-return tradeoff and how risk is thought of in investing.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Expected return is the reward; risk is the dispersion of possible outcomes
+      - Investors demand higher expected return to bear higher risk
+      - Risk includes volatility and the chance of permanent loss, not just ups and downs
+
+  - id: financial-markets
+    name: Financial Markets & Their Role
+    summary: Where savers and borrowers meet — channeling capital and setting prices for assets.
+    objective: Explain what financial markets do and the primary vs secondary market distinction.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Markets connect those with capital to those who need it
+      - Primary markets issue new securities; secondary markets trade existing ones
+      - Market prices aggregate information and allocate capital
+
+  - id: interest-rates-yields
+    name: Interest Rates & Yield
+    summary: The return earned on lending or holding an asset, expressed as a yield.
+    objective: Define yield and explain how it relates to price and the time value of money.
+    prereqs: [money-time-value]
+    tier: 2
+    rubric:
+      - Yield expresses an investment's return as a percentage of its price
+      - For a fixed payment, yield moves inversely to price
+      - Yields embed the time value of money plus risk and term premiums
+
+  - id: equities
+    name: Stocks & Equity
+    summary: Shares representing ownership in a company, with returns from price changes and dividends.
+    objective: Explain what owning a share entitles you to and where equity returns come from.
+    prereqs: [financial-markets]
+    tier: 2
+    rubric:
+      - A share is a fractional ownership claim on a company
+      - Returns come from price appreciation and dividends
+      - Shareholders bear residual risk, ranking behind creditors
+
+  - id: bonds
+    name: Bonds & Fixed Income
+    summary: Loans to a government or company that pay interest and return principal at maturity.
+    objective: Explain the structure of a bond and how it differs from owning equity.
+    prereqs: [financial-markets, money-time-value]
+    tier: 2
+    rubric:
+      - A bond is a loan paying periodic interest and principal at maturity
+      - Bondholders are creditors, paid before equity holders
+      - Key terms are coupon, face value, maturity, and issuer credit quality
+
+  - id: market-structure
+    name: Market Structure & Participants
+    summary: The exchanges, brokers, and market makers through which trades actually happen.
+    objective: Identify the main market participants and how a trade reaches the market.
+    prereqs: [financial-markets]
+    tier: 2
+    rubric:
+      - Exchanges and venues match buyers and sellers
+      - Brokers route orders; market makers quote prices and provide liquidity
+      - Participants range from retail to institutions and high-frequency firms
+
+  - id: liquidity
+    name: Liquidity
+    summary: How easily an asset can be bought or sold without moving its price.
+    objective: Explain what liquidity means and why it affects price and risk.
+    prereqs: [financial-markets]
+    tier: 2
+    rubric:
+      - Liquidity is the ease of trading without a large price impact
+      - The bid-ask spread is a visible cost of liquidity
+      - Illiquid assets carry extra risk and usually demand a premium
+
+  - id: orders-execution
+    name: Orders & Execution
+    summary: The order types and mechanics that determine the price and certainty of a trade.
+    objective: Compare market and limit orders and explain the bid-ask spread's role.
+    prereqs: [market-structure, liquidity]
+    tier: 3
+    rubric:
+      - A market order trades immediately at the best available price
+      - A limit order sets a price but may not fill
+      - Execution price depends on the spread and available liquidity
+
+  - id: funds
+    name: Pooled Funds (Mutual Funds & ETFs)
+    summary: Vehicles that pool money to hold a diversified basket of securities in one product.
+    objective: Explain how funds work and how ETFs differ from mutual funds.
+    prereqs: [equities, bonds]
+    tier: 3
+    rubric:
+      - A fund pools capital to hold many securities, giving instant diversification
+      - Index funds track a benchmark; active funds try to beat one
+      - ETFs trade intraday like stocks; mutual funds price once daily; fees vary
+
+  - id: bond-pricing
+    name: Bond Pricing & the Yield Curve
+    summary: How a bond's price moves with interest rates, and what the yield curve shows.
+    objective: Explain why bond prices move inversely to rates and what the yield curve conveys.
+    prereqs: [bonds, interest-rates-yields]
+    tier: 3
+    rubric:
+      - A bond's price is the present value of its future cash flows
+      - When market rates rise, existing bond prices fall, and vice versa
+      - The yield curve plots yield against maturity and signals rate/economic expectations
+
+  - id: equity-valuation
+    name: Equity Valuation Basics
+    summary: Estimating what a share is worth from earnings, growth, and discounted future cash flows.
+    objective: Explain the basic logic of valuing a stock and common valuation approaches.
+    prereqs: [equities, money-time-value]
+    tier: 3
+    rubric:
+      - A stock's value rests on expected future cash flows discounted to today
+      - Multiples (like P/E) compare price to a fundamental quickly
+      - Value depends on assumptions about growth, risk, and the discount rate
+
+  - id: diversification
+    name: Diversification & Portfolio Risk
+    summary: Combining assets that don't move together to reduce risk without sacrificing expected return.
+    objective: Explain how diversification lowers risk and what correlation has to do with it.
+    prereqs: [risk-return, equities, bonds]
+    tier: 3
+    rubric:
+      - Combining imperfectly correlated assets reduces overall volatility
+      - Diversification cuts asset-specific risk but not market-wide risk
+      - The benefit depends on how assets move relative to each other
+
+  - id: derivatives
+    name: Derivatives (Options & Futures)
+    summary: Contracts whose value derives from an underlying asset, used to hedge or speculate.
+    objective: Explain what options and futures are and the two main reasons they are used.
+    prereqs: [equities, orders-execution]
+    tier: 4
+    rubric:
+      - A derivative's value depends on an underlying asset or rate
+      - Futures obligate a trade; options grant a right without obligation
+      - They are used to hedge existing risk or to take leveraged positions
+
+  - id: market-efficiency
+    name: Market Efficiency & Price Discovery
+    summary: How quickly prices reflect available information, and what that implies for beating the market.
+    objective: Explain the efficient-market idea and its implications for active investing.
+    prereqs: [equity-valuation, liquidity]
+    tier: 4
+    rubric:
+      - Prices incorporate available information through trading (price discovery)
+      - If markets are efficient, consistently beating them is very hard
+      - Efficiency is a matter of degree and varies across markets
+
+  - id: portfolio-construction
+    name: Portfolio Construction & Asset Allocation
+    summary: Combining asset classes into a portfolio matched to an objective and risk tolerance.
+    objective: Explain how asset allocation shapes a portfolio's risk and return.
+    prereqs: [diversification, funds]
+    tier: 4
+    rubric:
+      - Asset allocation across classes is the main driver of portfolio risk and return
+      - The mix is matched to goals, horizon, and risk tolerance
+      - Rebalancing keeps the allocation from drifting over time
+
+  - id: risk-management
+    name: Hedging & Risk Management
+    summary: Using diversification, hedges, and position sizing to keep risk within tolerance.
+    objective: Explain the main tools for managing portfolio risk and their costs.
+    prereqs: [derivatives, portfolio-construction]
+    tier: 5
+    rubric:
+      - Risk is managed through diversification, hedging, and sizing — not eliminated
+      - Hedges (e.g. options) reduce downside at a cost that drags returns
+      - Managing risk means matching exposure to tolerance, not avoiding all loss

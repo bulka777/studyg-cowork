@@ -377,6 +377,61 @@
         subjects.map((s, i) => renderSidebarItem(s, i, i === activeIdx)).join('');
     }
 
+    /* Concept graph */
+    function renderConceptGraph(concepts, masteryMap) {
+      if (!concepts.length) return '';
+
+      const byTier = {};
+      for (const c of concepts) {
+        const t = c.tier ?? 0;
+        (byTier[t] = byTier[t] ?? []).push(c);
+      }
+      const tiers = Object.keys(byTier).map(Number).sort((a, b) => a - b);
+
+      const NW = 150, NH = 30, CW = 170, RH = 76, PX = 24, PY = 28;
+      const maxPer = Math.max(...tiers.map(t => byTier[t].length));
+      const svgW = PX * 2 + maxPer * CW;
+      const svgH = PY * 2 + tiers.length * RH;
+
+      // Assign center (x, y) to each node
+      const pos = {};
+      tiers.forEach((t, ti) => {
+        const nodes = byTier[t];
+        const x0 = (svgW - nodes.length * CW) / 2 + CW / 2;
+        nodes.forEach((c, ni) => {
+          pos[c.id] = { x: x0 + ni * CW, y: PY + ti * RH + NH / 2 };
+        });
+      });
+
+      // Edges: bezier from bottom of prereq to top of dependent
+      const edges = concepts.flatMap(c =>
+        (c.prereqs ?? []).filter(p => pos[p]).map(p => {
+          const { x: x1, y: y1 } = pos[p];
+          const { x: x2, y: y2 } = pos[c.id];
+          const sy = y1 + NH / 2 + 4;
+          const ty = y2 - NH / 2 - 4;
+          const my = (sy + ty) / 2;
+          return `<path d="M${x1},${sy} C${x1},${my} ${x2},${my} ${x2},${ty}" fill="none" stroke="var(--border)" stroke-width="1.5" marker-end="url(#g-arr)"/>`;
+        })
+      ).join('');
+
+      // Nodes
+      const sc = {
+        understood:  { f: 'var(--understood-bg)',  s: 'var(--understood)',  t: 'var(--understood)'  },
+        encountered: { f: 'var(--encountered-bg)', s: 'var(--encountered)', t: 'var(--encountered)' },
+        shaky:       { f: 'var(--shaky-bg)',        s: 'var(--shaky)',       t: 'var(--shaky)'       },
+        unseen:      { f: 'var(--surface)',         s: 'var(--border)',      t: 'var(--muted)'       },
+      };
+      const nodes = concepts.map(c => {
+        const { x, y } = pos[c.id];
+        const col = sc[masteryMap[c.id]?.state ?? 'unseen'];
+        const label = c.name.length > 20 ? c.name.slice(0, 19) + '\u2026' : c.name;
+        return `<g><rect x="${x - NW / 2}" y="${y - NH / 2}" width="${NW}" height="${NH}" rx="5" fill="${col.f}" stroke="${col.s}" stroke-width="1.5"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-weight="500" fill="${col.t}">${esc(label)}</text></g>`;
+      }).join('');
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" style="width:100%;display:block;padding:14px 0;"><defs><marker id="g-arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--border)"/></marker></defs>${edges}${nodes}</svg>`;
+    }
+
     /* Main detail */
     function renderDetail(subject) {
       const masteryMap = buildMasteryMap(subject.progress);
@@ -387,12 +442,6 @@
       const active     = lastActive(subject.progress);
       const pct        = k => total ? (counts[k] / total * 100).toFixed(1) : 0;
 
-      const byTier = {};
-      for (const c of (subject.map?.concepts ?? [])) {
-        const t = c.tier ?? 0;
-        (byTier[t] = byTier[t] ?? []).push(c);
-      }
-      const tiers    = Object.keys(byTier).sort((a, b) => Number(a) - Number(b));
       const diveList = subject.dives?.deep_dives ?? [];
 
       return `
@@ -432,27 +481,11 @@ ${frontier.length ? `
   </ul>
 </div>` : ''}
 
-${tiers.length ? `
+${subject.map?.concepts?.length ? `
 <div class="section">
   <details>
     <summary>Concept map <span style="font-weight:400;color:var(--muted)">(${total})</span></summary>
-    <div class="concept-grid">
-      ${tiers.map(t => `
-      <div>
-        <div class="tier-label">Tier ${t}</div>
-        ${byTier[t].map(c => {
-          const state = masteryMap[c.id]?.state ?? 'unseen';
-          return `
-        <div class="concept-row">
-          <span class="state-dot ${state}"></span>
-          <div>
-            <span class="cname">${esc(c.name)}</span>
-            ${c.summary ? `<span class="csummary"> \u2014 ${esc(c.summary)}</span>` : ''}
-          </div>
-        </div>`;
-        }).join('')}
-      </div>`).join('')}
-    </div>
+    ${renderConceptGraph(subject.map.concepts, masteryMap)}
   </details>
 </div>` : ''}
 

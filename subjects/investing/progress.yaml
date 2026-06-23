@@ -1,0 +1,74 @@
+subject: Investing
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   money-time-value, risk-return, financial-markets.
+# Recommended first step: financial-markets, then risk-return.
+mastery:
+  - id: money-time-value
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: risk-return
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: financial-markets
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: interest-rates-yields
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: equities
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: bonds
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: market-structure
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: liquidity
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: orders-execution
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: funds
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: bond-pricing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: equity-valuation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: diversification
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: derivatives
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: market-efficiency
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: portfolio-construction
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: risk-management
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

@@ -1,57 +1,65 @@
 subjects:
   - id: ai-retrieval
     name: AI Retrieval
-    folder: ai-retrieval/
-    map: ai-retrieval/map.yaml
-    progress: ai-retrieval/progress.yaml
-    cards: ai-retrieval/cards.yaml
-    deep_dives: ai-retrieval/deep-dives/index.yaml
+    folder: subjects/ai-retrieval/
+    map: subjects/ai-retrieval/map.yaml
+    progress: subjects/ai-retrieval/progress.yaml
+    cards: subjects/ai-retrieval/cards.yaml
+    deep_dives: subjects/ai-retrieval/deep-dives/index.yaml
     description: "Embeddings, chunking, vector search, RAG, GraphRAG, and retrieval evaluation."
   - id: software-system-design
     name: Software System Design
-    folder: software-system-design/
-    map: software-system-design/map.yaml
-    progress: software-system-design/progress.yaml
-    cards: software-system-design/cards.yaml
-    deep_dives: software-system-design/deep-dives/index.yaml
+    folder: subjects/software-system-design/
+    map: subjects/software-system-design/map.yaml
+    progress: subjects/software-system-design/progress.yaml
+    cards: subjects/software-system-design/cards.yaml
+    deep_dives: subjects/software-system-design/deep-dives/index.yaml
     description: "Client–server fundamentals, scaling, caching, load balancing, queues, APIs, microservices, partitioning, replication, CAP, consistency, and consensus — broad system design with a data-intensive spine."
   - id: economics
     name: Economics
-    folder: economics/
-    map: economics/map.yaml
-    progress: economics/progress.yaml
-    cards: economics/cards.yaml
-    deep_dives: economics/deep-dives/index.yaml
+    folder: subjects/economics/
+    map: subjects/economics/map.yaml
+    progress: subjects/economics/progress.yaml
+    cards: subjects/economics/cards.yaml
+    deep_dives: subjects/economics/deep-dives/index.yaml
     description: "Scarcity, supply & demand, money, inflation, GDP, interest rates, central banks, business cycles, and monetary & fiscal policy — macro and policy oriented toward the present-day economy."
   - id: permaculture-gardening
     name: Permaculture Gardening
-    folder: permaculture-gardening/
-    map: permaculture-gardening/map.yaml
-    progress: permaculture-gardening/progress.yaml
-    cards: permaculture-gardening/cards.yaml
-    deep_dives: permaculture-gardening/deep-dives/index.yaml
+    folder: subjects/permaculture-gardening/
+    map: subjects/permaculture-gardening/map.yaml
+    progress: subjects/permaculture-gardening/progress.yaml
+    cards: subjects/permaculture-gardening/cards.yaml
+    deep_dives: subjects/permaculture-gardening/deep-dives/index.yaml
     description: "Soil, composting, beds, sowing, succession, pests, and harvest alongside permaculture design — observation, zones & sectors, water, mulch, guilds, perennials, closing loops, and food forests."
   - id: energy-and-machines
     name: Energy & Machines
-    folder: energy-and-machines/
-    map: energy-and-machines/map.yaml
-    progress: energy-and-machines/progress.yaml
-    cards: energy-and-machines/cards.yaml
-    deep_dives: energy-and-machines/deep-dives/index.yaml
+    folder: subjects/energy-and-machines/
+    map: subjects/energy-and-machines/map.yaml
+    progress: subjects/energy-and-machines/progress.yaml
+    cards: subjects/energy-and-machines/cards.yaml
+    deep_dives: subjects/energy-and-machines/deep-dives/index.yaml
     description: "Energy, heat, and thermodynamics up through combustion engines, turbines, the refrigeration cycle, heat pumps, and HVAC — how engines and heating/cooling work from shared physical foundations."
   - id: electricity-and-electromagnetism
     name: Electricity & Electromagnetism
-    folder: electricity-and-electromagnetism/
-    map: electricity-and-electromagnetism/map.yaml
-    progress: electricity-and-electromagnetism/progress.yaml
-    cards: electricity-and-electromagnetism/cards.yaml
-    deep_dives: electricity-and-electromagnetism/deep-dives/index.yaml
+    folder: subjects/electricity-and-electromagnetism/
+    map: subjects/electricity-and-electromagnetism/map.yaml
+    progress: subjects/electricity-and-electromagnetism/progress.yaml
+    cards: subjects/electricity-and-electromagnetism/cards.yaml
+    deep_dives: subjects/electricity-and-electromagnetism/deep-dives/index.yaml
     description: "Charge, circuits, induction, motors and generators, batteries, transformers, the power grid, and electric-vehicle powertrains — how electricity works and how EVs work."
   - id: how-cities-work
     name: How Cities Work
-    folder: how-cities-work/
-    map: how-cities-work/map.yaml
-    progress: how-cities-work/progress.yaml
-    cards: how-cities-work/cards.yaml
-    deep_dives: how-cities-work/deep-dives/index.yaml
+    folder: subjects/how-cities-work/
+    map: subjects/how-cities-work/map.yaml
+    progress: subjects/how-cities-work/progress.yaml
+    cards: subjects/how-cities-work/cards.yaml
+    deep_dives: subjects/how-cities-work/deep-dives/index.yaml
     description: "Land use, street networks, transit, water and sewer, utilities, governance, housing, and planning — how towns and cities are organized as interdependent systems."
+  - id: investing
+    name: Investing
+    folder: subjects/investing/
+    map: subjects/investing/map.yaml
+    progress: subjects/investing/progress.yaml
+    cards: subjects/investing/cards.yaml
+    deep_dives: subjects/investing/deep-dives/index.yaml
+    description: "Markets and instruments — time value of money, risk & return, equities, bonds, funds, market structure, liquidity, orders, valuation, derivatives, and portfolio construction. Educational, not investment advice."
