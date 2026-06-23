@@ -110,7 +110,7 @@ For each subject, determine its **mode**:
 2. **Select the next concept** by priority: frontier-proximity, then any `shaky` concepts needing rework, then interest. **Never pick a concept whose prerequisites aren't all `understood`** — the prerequisite gate is absolute.
 3. Teach a single grounded step into that concept (web-search to ground it; cite sources). Set its state to `encountered`.
 4. Open with one natural question aimed at the concept's rubric — not "make sense?". Follow the answer: probe further only where rubric points haven't yet surfaced. Don't pre-load all rubric points as separate questions; let the exchange develop and steer toward gaps.
-5. **Grade against the rubric, honestly.** If all key points are met → `understood`. If not → `shaky`, and record the misconception. Be willing to mark `shaky`; an agreeable pass teaches nothing.
+5. **Grade against the rubric, honestly.** If all key points are met *with confidence* → `understood`. If not → `shaky`, and record the misconception. Be willing to mark `shaky`; an agreeable pass teaches nothing. **A correct-sounding answer delivered with clear uncertainty or guessing → `encountered`, not `understood`.**
 6. Write progress back. Report plainly: what stuck, what's shaky, what's next.
 7. Offer to mint cards for what was just understood.
 
@@ -119,7 +119,7 @@ Use when the user has already studied a concept (e.g. via a deep dive) and wants
 **Precondition:** the concept must be at least `encountered` in progress. If it is still `unseen`, say so and suggest either `learn <subject>` or `deep dive` first — do not run the Socratic check on a concept the user has never been introduced to.
 1. Load the concept's rubric from the map.
 2. Open with one natural question. No re-teaching first. Follow the answer — probe further only where rubric points haven't yet surfaced. Don't ask a predetermined list; let the exchange develop and steer toward gaps organically. Only mark a rubric point missed if a targeted follow-up also failed to draw it out.
-3. **Grade against the rubric, honestly.** If all key points are met → mark `understood` and write progress back. If not → mark `shaky`, record the misconception, and write progress back.
+3. **Grade against the rubric, honestly.** If all key points are met *with confidence* → mark `understood` and write progress back. If not → mark `shaky`, record the misconception, and write progress back. **A correct-sounding answer delivered with clear uncertainty or guessing → `encountered`, not `understood`.**
 4. Report plainly: what was demonstrated, what was missing, what's now unblocked (or still blocked).
 5. Offer to mint recall cards if marked `understood`.
 
@@ -145,9 +145,9 @@ Use to calibrate progress for a subject from scratch or to re-calibrate after si
    b. Follow the answer — probe further only where rubric points haven't yet surfaced. Don't front-load all rubric points as separate questions; steer toward gaps as they emerge. Only mark a rubric point missed if a targeted follow-up also failed to draw it out.
    c. Grade the concept immediately after the exchange (see grading below) and announce the result briefly ("Marked understood." / "Marked shaky — [gap]." ) before moving to the next concept.
 3. Grading per concept:
-   - All rubric points met → `understood`
+   - All rubric points met *with confidence* → `understood` (guessing that lands on the right answer does not count)
    - Partially met → `shaky` (record the gap in `misconceptions`)
-   - Some familiarity but rubric not fully testable → `encountered`
+   - Some familiarity but rubric not fully testable, or correct answers given with clear uncertainty → `encountered`
    - Clearly cold → `unseen`
    Set `last_reviewed` to today for any concept not left `unseen`.
 4. For concepts not covered in the interview, infer state conservatively: if a concept's `tier` is ≤ the lowest tier at which the user demonstrated mastery, set it to `encountered`; otherwise leave as-is.
@@ -171,7 +171,7 @@ When a new concept surfaces (usually from `digest`):
 ## Cross-cutting rules (the invariants — never violate)
 - **Prerequisite gate.** Never teach a concept whose prerequisites aren't all `understood`.
 - **The model fills in; it doesn't steer.** What's taught next comes from the frontier computation, not from your in-the-moment preference.
-- **Honesty over agreeableness.** Grade against the rubric; mark `shaky` when earned; let shaky concepts block their dependents.
+- **Honesty over agreeableness.** Grade against the rubric; mark `shaky` when earned; let shaky concepts block their dependents. A guess that lands on the right answer is not mastery — mark `encountered`.
 - **Grounded, seams showing.** Ground generation in cited sources; show the real reference beside the model; separate sourced truth from illustration.
 - **Two signals, kept apart.** "Interesting?" tunes what you surface in `digest`; "understood?" tunes mastery. Don't let one stand in for the other.
 - **Small and deliberate.** A handful of items a day, never an endless list.

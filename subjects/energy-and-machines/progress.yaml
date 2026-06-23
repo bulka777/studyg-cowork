@@ -5,36 +5,36 @@ subject: Energy & Machines
 # Recommended first step: energy-forms, then temperature-heat.
 mastery:
   - id: energy-forms
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: temperature-heat
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: 2026-06-23
+    misconceptions: ["believed temperature continues rising during boiling — missed that phase changes absorb latent heat at constant temperature"]
   - id: matter-states
-    state: unseen
+    state: encountered
     last_reviewed: null
     misconceptions: []
   - id: heat-transfer
-    state: unseen
+    state: encountered
     last_reviewed: null
     misconceptions: []
   - id: thermodynamics-laws
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: 2026-06-23
+    misconceptions: ["unaware of second law and entropy; knows first law (conservation) intuitively but couldn't articulate why waste heat is fundamental to engines"]
   - id: pressure-gas
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: fuel-combustion
-    state: unseen
+    state: encountered
     last_reviewed: null
     misconceptions: []
   - id: heat-engines
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: phase-change-cooling
     state: unseen
@@ -50,7 +50,7 @@ mastery:
     misconceptions: []
   - id: refrigeration-cycle
     state: unseen
-    last_reviewed: null
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: turbines
     state: unseen
@@ -58,11 +58,11 @@ mastery:
     misconceptions: []
   - id: heat-pumps
     state: unseen
-    last_reviewed: null
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: hvac-systems
     state: unseen
-    last_reviewed: null
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: efficiency-engines
     state: unseen

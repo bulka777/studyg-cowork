@@ -5,56 +5,58 @@ subject: Permaculture Gardening
 # Recommended first step: observation, then soil-basics.
 mastery:
   - id: observation
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: soil-basics
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: sun-climate
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: soil-fertility
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: composting
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: water-catchment
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: 2026-06-23
+    misconceptions:
+      - "Knows the goal (slow/store water) and mulching, but earthworks (swales on contour) not present."
   - id: zones-sectors
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: bed-design
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: mulching
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: sowing
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: 2026-06-23
+    misconceptions:
+      - "Has succession sowing concept but frost dates / seasonal timing not present."
   - id: perennials
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: companion-guilds
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: pest-management
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: harvest-seed-saving
     state: unseen
@@ -65,6 +67,7 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: food-forest
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: 2026-06-23
+    misconceptions:
+      - "Has the spirit (diverse, low-maintenance) but vertical layering structure not present unprompted."
