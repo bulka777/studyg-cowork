@@ -1,0 +1,74 @@
+subject: Electricity & Electromagnetism
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   electric-charge, magnetism, materials-conduction.
+# Recommended first step: electric-charge, then materials-conduction.
+mastery:
+  - id: electric-charge
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: magnetism
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: materials-conduction
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: voltage-current
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: circuits
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: ac-dc
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: electromagnetic-induction
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: resistive-heating
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: capacitance-inductance
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: motors-generators
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: transformers
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: batteries
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: semiconductors-electronics
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: power-grid
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: ev-powertrain
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: power-electronics
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: distribution-safety
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

@@ -1,0 +1,70 @@
+subject: Energy & Machines
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   energy-forms, temperature-heat, matter-states.
+# Recommended first step: energy-forms, then temperature-heat.
+mastery:
+  - id: energy-forms
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: temperature-heat
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: matter-states
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: heat-transfer
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: thermodynamics-laws
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: pressure-gas
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: fuel-combustion
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: heat-engines
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: phase-change-cooling
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: insulation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: internal-combustion
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: refrigeration-cycle
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: turbines
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: heat-pumps
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: hvac-systems
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: efficiency-engines
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

@@ -15,3 +15,43 @@ subjects:
     cards: software-system-design/cards.yaml
     deep_dives: software-system-design/deep-dives/index.yaml
     description: "Client–server fundamentals, scaling, caching, load balancing, queues, APIs, microservices, partitioning, replication, CAP, consistency, and consensus — broad system design with a data-intensive spine."
+  - id: economics
+    name: Economics
+    folder: economics/
+    map: economics/map.yaml
+    progress: economics/progress.yaml
+    cards: economics/cards.yaml
+    deep_dives: economics/deep-dives/index.yaml
+    description: "Scarcity, supply & demand, money, inflation, GDP, interest rates, central banks, business cycles, and monetary & fiscal policy — macro and policy oriented toward the present-day economy."
+  - id: permaculture-gardening
+    name: Permaculture Gardening
+    folder: permaculture-gardening/
+    map: permaculture-gardening/map.yaml
+    progress: permaculture-gardening/progress.yaml
+    cards: permaculture-gardening/cards.yaml
+    deep_dives: permaculture-gardening/deep-dives/index.yaml
+    description: "Soil, composting, beds, sowing, succession, pests, and harvest alongside permaculture design — observation, zones & sectors, water, mulch, guilds, perennials, closing loops, and food forests."
+  - id: energy-and-machines
+    name: Energy & Machines
+    folder: energy-and-machines/
+    map: energy-and-machines/map.yaml
+    progress: energy-and-machines/progress.yaml
+    cards: energy-and-machines/cards.yaml
+    deep_dives: energy-and-machines/deep-dives/index.yaml
+    description: "Energy, heat, and thermodynamics up through combustion engines, turbines, the refrigeration cycle, heat pumps, and HVAC — how engines and heating/cooling work from shared physical foundations."
+  - id: electricity-and-electromagnetism
+    name: Electricity & Electromagnetism
+    folder: electricity-and-electromagnetism/
+    map: electricity-and-electromagnetism/map.yaml
+    progress: electricity-and-electromagnetism/progress.yaml
+    cards: electricity-and-electromagnetism/cards.yaml
+    deep_dives: electricity-and-electromagnetism/deep-dives/index.yaml
+    description: "Charge, circuits, induction, motors and generators, batteries, transformers, the power grid, and electric-vehicle powertrains — how electricity works and how EVs work."
+  - id: how-cities-work
+    name: How Cities Work
+    folder: how-cities-work/
+    map: how-cities-work/map.yaml
+    progress: how-cities-work/progress.yaml
+    cards: how-cities-work/cards.yaml
+    deep_dives: how-cities-work/deep-dives/index.yaml
+    description: "Land use, street networks, transit, water and sewer, utilities, governance, housing, and planning — how towns and cities are organized as interdependent systems."

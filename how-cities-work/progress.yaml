@@ -1,0 +1,70 @@
+subject: How Cities Work
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   settlement-geography, land-use, population-density.
+# Recommended first step: settlement-geography, then land-use.
+mastery:
+  - id: settlement-geography
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: land-use
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: population-density
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: street-networks
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: municipal-governance
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: water-supply
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: utilities-power
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: transit
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: sewer-stormwater
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: housing-development
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: waste-management
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: economic-base
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: traffic-circulation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: infrastructure-systems
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: urban-planning
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: resilience-sustainability
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

@@ -1,0 +1,70 @@
+subject: Economics
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   scarcity, supply-demand, money.
+# Recommended first step: scarcity, then supply-demand.
+mastery:
+  - id: scarcity
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: supply-demand
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: money
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: elasticity
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: markets-prices
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: inflation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: banking-credit
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: trade
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: gdp
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: interest-rates
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: central-banks
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: exchange-rates
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: business-cycle
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: unemployment
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: monetary-policy
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: fiscal-policy
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

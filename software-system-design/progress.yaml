@@ -68,11 +68,35 @@ mastery:
     state: unseen
     last_reviewed: null
     misconceptions: []
+  - id: blob-storage
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: cdn
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: authn-authz
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: push-communication
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
   - id: rate-limiting
     state: unseen
     last_reviewed: null
     misconceptions: []
   - id: event-driven
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: consistent-hashing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: batch-stream-processing
     state: unseen
     last_reviewed: null
     misconceptions: []
@@ -84,7 +108,23 @@ mastery:
     state: unseen
     last_reviewed: null
     misconceptions: []
+  - id: observability
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: service-discovery
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: saga
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
   - id: consensus
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: logical-clocks
     state: unseen
     last_reviewed: null
     misconceptions: []

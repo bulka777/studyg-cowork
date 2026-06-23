@@ -1,0 +1,183 @@
+subject: Economics
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: macroeconomics & policy, oriented toward understanding the present-day economy and news —
+# central banks, interest rates, inflation, fiscal policy, trade, and business cycles —
+# built up from micro foundations (scarcity, supply & demand, money). Pairs well with the digest loop.
+# Recommended entry order among the tier-1 roots: scarcity -> supply-demand -> money.
+concepts:
+  - id: scarcity
+    name: Scarcity & Opportunity Cost
+    summary: Wants exceed resources, so every choice means giving up the next-best alternative.
+    objective: Explain why scarcity forces tradeoffs and what opportunity cost measures.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Resources are limited relative to unlimited wants, forcing choices
+      - The opportunity cost of a choice is the value of the best alternative given up
+      - This applies to individuals, firms, and governments alike
+
+  - id: supply-demand
+    name: Supply & Demand
+    summary: How the quantity buyers want and sellers offer move with price toward a market equilibrium.
+    objective: Explain how supply and demand curves interact to set price and quantity.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Demand falls and supply rises as price increases, other things equal
+      - Equilibrium is the price where quantity demanded equals quantity supplied
+      - Shifts in either curve (not movements along it) change the equilibrium
+
+  - id: money
+    name: Money & Its Functions
+    summary: What makes something money — a medium of exchange, store of value, and unit of account.
+    objective: State the functions of money and why they make exchange more efficient than barter.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Money serves as medium of exchange, store of value, and unit of account
+      - It removes the need for a double coincidence of wants in barter
+      - Its value rests on trust and acceptance, not necessarily intrinsic worth
+
+  - id: elasticity
+    name: Elasticity
+    summary: How responsive quantity demanded or supplied is to a change in price or income.
+    objective: Define price elasticity and explain what makes demand elastic or inelastic.
+    prereqs: [supply-demand]
+    tier: 2
+    rubric:
+      - Elasticity measures the percent change in quantity per percent change in price
+      - Demand is inelastic when few substitutes or necessities are involved
+      - Elasticity determines how a price change affects total revenue
+
+  - id: markets-prices
+    name: Markets & the Price Mechanism
+    summary: How prices act as signals that coordinate the decisions of buyers and sellers.
+    objective: Explain how prices allocate resources without central direction.
+    prereqs: [supply-demand]
+    tier: 2
+    rubric:
+      - Prices convey information about relative scarcity and value
+      - They give incentives that coordinate independent decisions
+      - Surpluses and shortages are signals that push prices toward equilibrium
+
+  - id: inflation
+    name: Inflation
+    summary: A sustained rise in the general price level, which erodes the purchasing power of money.
+    objective: Define inflation, distinguish it from relative price changes, and name its main drivers.
+    prereqs: [money, supply-demand]
+    tier: 2
+    rubric:
+      - Inflation is a sustained rise in the overall price level, not a one-off price change
+      - It reduces the purchasing power of money and is measured by indexes like CPI
+      - Demand-pull and cost-push pressures, and money growth, are the main drivers
+
+  - id: banking-credit
+    name: Banking & Credit Creation
+    summary: How banks take deposits, make loans, and expand the money supply through credit.
+    objective: Explain how commercial banks create money via lending and what limits it.
+    prereqs: [money]
+    tier: 2
+    rubric:
+      - Banks lend out a fraction of deposits, creating new deposits (money) in the process
+      - Credit creation is constrained by reserves, capital, and demand for loans
+      - This makes most of the money supply bank-created, not physical cash
+
+  - id: trade
+    name: Trade & Comparative Advantage
+    summary: Why specializing and trading makes both parties better off, even if one is better at everything.
+    objective: Explain comparative advantage and why it drives gains from trade.
+    prereqs: [scarcity, supply-demand]
+    tier: 2
+    rubric:
+      - Comparative advantage is having a lower opportunity cost in producing a good
+      - Both parties gain when each specializes by comparative (not absolute) advantage
+      - Trade expands total output but can create domestic winners and losers
+
+  - id: gdp
+    name: GDP & Measuring Output
+    summary: The total value of goods and services an economy produces, and how it is measured.
+    objective: Define GDP and explain the output, income, and expenditure views of it.
+    prereqs: [markets-prices]
+    tier: 3
+    rubric:
+      - GDP measures the market value of final goods and services produced in a period
+      - It can be viewed equivalently as output, income, or expenditure
+      - Real GDP adjusts for inflation; nominal does not
+
+  - id: interest-rates
+    name: Interest Rates
+    summary: The price of borrowing money over time, and the return for lending or saving it.
+    objective: Explain what an interest rate represents and what makes it rise or fall.
+    prereqs: [banking-credit, supply-demand]
+    tier: 3
+    rubric:
+      - An interest rate is the price of credit — the cost of borrowing and reward for saving
+      - It reflects supply and demand for loanable funds plus expected inflation and risk
+      - Higher rates discourage borrowing and spending; lower rates encourage them
+
+  - id: central-banks
+    name: Central Banks
+    summary: The institution that manages a nation's money supply and acts as lender of last resort.
+    objective: Explain what a central bank does and why it sits apart from commercial banks.
+    prereqs: [banking-credit]
+    tier: 3
+    rubric:
+      - A central bank manages the money supply and oversees the banking system
+      - It acts as lender of last resort to prevent bank runs and panics
+      - Independence from day-to-day politics is meant to protect price stability
+
+  - id: exchange-rates
+    name: Exchange Rates
+    summary: The price of one currency in terms of another, and what makes it move.
+    objective: Explain how exchange rates are determined and how they affect trade.
+    prereqs: [money, trade]
+    tier: 3
+    rubric:
+      - An exchange rate is the price of one currency in terms of another
+      - It is driven by trade flows, interest-rate differentials, and capital movements
+      - A weaker currency makes exports cheaper and imports dearer
+
+  - id: business-cycle
+    name: The Business Cycle
+    summary: The recurring expansion and contraction of economic activity around long-run growth.
+    objective: Describe the phases of the business cycle and what marks a recession.
+    prereqs: [gdp]
+    tier: 4
+    rubric:
+      - Economies move through expansion, peak, contraction, and trough phases
+      - A recession is a significant, broad decline in activity (often falling real GDP)
+      - Cycles are driven by swings in demand, credit, and expectations
+
+  - id: unemployment
+    name: Unemployment
+    summary: People able and willing to work but without a job, and why some always exists.
+    objective: Define the unemployment rate and distinguish its main types.
+    prereqs: [supply-demand, gdp]
+    tier: 4
+    rubric:
+      - The unemployment rate is the share of the labor force actively seeking work
+      - Frictional, structural, and cyclical unemployment have different causes
+      - Some unemployment persists even in a healthy economy (the natural rate)
+
+  - id: monetary-policy
+    name: Monetary Policy
+    summary: How a central bank steers interest rates and the money supply to manage inflation and demand.
+    objective: Explain the tools of monetary policy and how they transmit to the economy.
+    prereqs: [central-banks, interest-rates, inflation]
+    tier: 4
+    rubric:
+      - Central banks adjust policy rates and the money supply to influence demand
+      - Tightening raises rates to cool inflation; easing lowers them to support activity
+      - Effects work with lags through borrowing, spending, and expectations
+
+  - id: fiscal-policy
+    name: Fiscal Policy
+    summary: How governments use spending and taxation to influence output and employment.
+    objective: Explain how fiscal policy affects demand and what constrains it.
+    prereqs: [gdp, business-cycle]
+    tier: 5
+    rubric:
+      - Government spending and taxes affect aggregate demand directly
+      - Expansionary policy supports demand in downturns; contractionary cools an overheating economy
+      - Deficits, debt, and timing lags constrain how freely it can be used

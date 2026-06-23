@@ -1,0 +1,182 @@
+subject: How Cities Work
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: how towns and cities are organized as systems — land use, street networks, transit,
+# water/sewer, utilities, governance, and planning — built up from why settlements form.
+# Recommended entry order among the tier-1 roots: settlement-geography -> land-use -> population-density.
+concepts:
+  - id: settlement-geography
+    name: Site, Geography & Why Cities Form
+    summary: Why settlements arise where they do — water, trade routes, terrain, and resources.
+    objective: Explain the geographic factors that drive where and why cities form.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Cities cluster around water, trade routes, defensible or fertile terrain
+      - Geography shapes a settlement's growth, limits, and economy
+      - Site (the physical spot) and situation (regional connections) both matter
+
+  - id: land-use
+    name: Land Use & Zoning
+    summary: How land is allocated among housing, commerce, industry, and open space, and the rules that govern it.
+    objective: Explain what zoning does and how land-use patterns shape a city.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Land use sorts activities (residential, commercial, industrial, civic) across space
+      - Zoning rules regulate what can be built where and how densely
+      - Land-use patterns drive traffic, services, and daily life
+
+  - id: population-density
+    name: Population, Density & Growth
+    summary: How many people live where, and how density shapes the demands a place must meet.
+    objective: Explain how population density affects the services and infrastructure a city needs.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Density is people per unit area, varying sharply within a city
+      - Higher density raises demand for transit, utilities, and housing
+      - Growth and decline reshape what infrastructure is needed
+
+  - id: street-networks
+    name: Street Networks & Grids
+    summary: How the layout of streets — grids, hierarchies, cul-de-sacs — structures movement and access.
+    objective: Compare street-network patterns and how each affects circulation and access.
+    prereqs: [land-use]
+    tier: 2
+    rubric:
+      - Street patterns (grid, radial, hierarchical) shape how people move
+      - Connectivity affects congestion, walkability, and access
+      - The network frames the blocks and parcels land use fills
+
+  - id: municipal-governance
+    name: Municipal Governance & Funding
+    summary: Who runs a city, how decisions are made, and how services are paid for.
+    objective: Explain how local government is structured and funded.
+    prereqs: [land-use]
+    tier: 2
+    rubric:
+      - Local government sets land use, services, and codes within higher-level law
+      - Property and other local taxes plus fees fund municipal services
+      - Budgets force tradeoffs among competing public needs
+
+  - id: water-supply
+    name: Water Supply Systems
+    summary: Sourcing, treating, and delivering clean water across a city under pressure.
+    objective: Trace water from source to tap and explain what keeps it flowing and safe.
+    prereqs: [settlement-geography]
+    tier: 2
+    rubric:
+      - Water is drawn from sources set by local geography, then treated
+      - Pressurized networks of mains and pumps deliver it citywide
+      - Treatment and testing keep delivered water safe
+
+  - id: utilities-power
+    name: Power & Utility Distribution
+    summary: How electricity, gas, and communications are carried to every building in a city.
+    objective: Explain how utility networks distribute services across the urban fabric.
+    prereqs: [settlement-geography]
+    tier: 2
+    rubric:
+      - Utilities run as networks of lines or pipes reaching every parcel
+      - Distribution follows streets and rights-of-way
+      - Capacity must scale with density and demand
+
+  - id: transit
+    name: Public Transit & Mobility
+    summary: Moving many people efficiently by bus, rail, and other shared modes.
+    objective: Explain how transit serves density and what makes a network effective.
+    prereqs: [street-networks, population-density]
+    tier: 3
+    rubric:
+      - Transit moves more people per lane than private cars, suiting density
+      - Route, frequency, and coverage determine ridership
+      - Transit and land-use density reinforce each other
+
+  - id: sewer-stormwater
+    name: Sewer & Stormwater
+    summary: Carrying away wastewater and rain so the city stays sanitary and dry.
+    objective: Distinguish sanitary sewage from stormwater and explain how each is managed.
+    prereqs: [water-supply]
+    tier: 3
+    rubric:
+      - Sanitary sewers carry wastewater to treatment before release
+      - Stormwater systems route rainfall to prevent flooding
+      - Combined systems can overflow, motivating their separation
+
+  - id: housing-development
+    name: Housing & Development
+    summary: How housing gets built, what shapes its supply, and how it interacts with land rules.
+    objective: Explain what drives housing supply and affordability in a city.
+    prereqs: [land-use, municipal-governance]
+    tier: 3
+    rubric:
+      - Housing supply responds to zoning, land cost, and financing
+      - Density and type are constrained by land-use rules
+      - Supply, demand, and regulation together set affordability
+
+  - id: waste-management
+    name: Waste Management
+    summary: Collecting, sorting, and disposing of or recycling the city's solid waste.
+    objective: Explain how a city handles the waste stream it continuously produces.
+    prereqs: [municipal-governance]
+    tier: 3
+    rubric:
+      - Collection routes gather waste for disposal or recycling
+      - Landfill, incineration, and recycling are competing end paths
+      - Cost, capacity, and environmental impact drive the choices
+
+  - id: economic-base
+    name: Local Economy & Jobs Base
+    summary: What a city does for a living — the industries and jobs that sustain it.
+    objective: Explain how a city's economic base supports its population and budget.
+    prereqs: [population-density, municipal-governance]
+    tier: 3
+    rubric:
+      - A city's economic base is the activity that brings in outside income
+      - Jobs and industry anchor population and tax revenue
+      - A narrow base makes a city vulnerable to shocks
+
+  - id: traffic-circulation
+    name: Traffic & Circulation
+    summary: How people and goods flow through the network, and why congestion arises.
+    objective: Explain what causes congestion and how circulation is managed.
+    prereqs: [transit, street-networks]
+    tier: 4
+    rubric:
+      - Flow depends on network capacity versus demand
+      - Congestion emerges when demand exceeds capacity at peak times
+      - Signals, pricing, and transit shift demand across modes and times
+
+  - id: infrastructure-systems
+    name: Infrastructure as Networks
+    summary: Seeing water, sewer, power, and roads as interdependent networks a city must keep running.
+    objective: Explain why urban infrastructure behaves as interdependent systems.
+    prereqs: [water-supply, sewer-stormwater, utilities-power]
+    tier: 4
+    rubric:
+      - Core systems (water, sewer, power, roads) are networks with capacity limits
+      - They are interdependent — failures cascade across systems
+      - Maintenance and renewal compete with new investment
+
+  - id: urban-planning
+    name: Urban Planning
+    summary: Coordinating land use, transport, and services toward a deliberate vision for a place.
+    objective: Explain what urban planning coordinates and the tradeoffs it manages.
+    prereqs: [housing-development, transit]
+    tier: 4
+    rubric:
+      - Planning aligns land use, mobility, and services over time
+      - It balances growth, livability, equity, and cost
+      - Plans guide but don't fully control how a city actually develops
+
+  - id: resilience-sustainability
+    name: Resilience & Sustainability
+    summary: How a city absorbs shocks and meets needs without exhausting its resources.
+    objective: Explain what makes a city resilient and what sustainability requires of its systems.
+    prereqs: [infrastructure-systems, urban-planning]
+    tier: 5
+    rubric:
+      - Resilience is the ability to absorb and recover from shocks
+      - Sustainability balances current needs against long-term resource limits
+      - Redundancy, diversity, and good planning build both

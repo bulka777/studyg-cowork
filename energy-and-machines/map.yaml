@@ -1,0 +1,183 @@
+subject: Energy & Machines
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: how heat and energy turn into useful work — thermodynamics up to engines, turbines,
+# refrigeration, heat pumps, and HVAC. Answers "how do engines work" and "how does HVAC work"
+# from shared physical foundations rather than as isolated gadgets.
+# Recommended entry order among the tier-1 roots: energy-forms -> temperature-heat -> matter-states.
+concepts:
+  - id: energy-forms
+    name: Energy, Work & Power
+    summary: What energy is, the forms it takes, and how it converts from one form to another to do work.
+    objective: Define energy, work, and power, and explain conservation across conversions.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Energy is the capacity to do work and appears in forms (kinetic, potential, thermal, chemical)
+      - Energy is conserved — converted, never created or destroyed
+      - Power is the rate of doing work or transferring energy
+
+  - id: temperature-heat
+    name: Temperature & Heat
+    summary: The difference between temperature (how hot) and heat (energy in transit due to a temperature difference).
+    objective: Distinguish temperature from heat and explain what drives heat flow.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Temperature measures average molecular kinetic energy; heat is energy transferred
+      - Heat flows spontaneously from hotter to colder regions
+      - Adding heat can raise temperature or drive a phase change
+
+  - id: matter-states
+    name: States of Matter & Phase Change
+    summary: Solids, liquids, and gases, and the energy exchanged when matter changes between them.
+    objective: Explain phase changes and why they absorb or release energy at constant temperature.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Matter's state reflects how tightly its molecules are bound
+      - Phase changes absorb or release latent heat at constant temperature
+      - This stored latent heat is large compared with simple temperature change
+
+  - id: heat-transfer
+    name: Heat Transfer
+    summary: The three ways heat moves — conduction, convection, and radiation.
+    objective: Compare conduction, convection, and radiation and where each dominates.
+    prereqs: [temperature-heat]
+    tier: 2
+    rubric:
+      - Conduction moves heat through direct molecular contact
+      - Convection moves heat by bulk fluid motion
+      - Radiation transfers heat as electromagnetic waves, needing no medium
+
+  - id: thermodynamics-laws
+    name: Laws of Thermodynamics
+    summary: The rules governing energy and entropy that bound what any machine can do.
+    objective: State the first and second laws and explain what entropy implies for engines.
+    prereqs: [energy-forms, temperature-heat]
+    tier: 2
+    rubric:
+      - The first law is energy conservation applied to heat and work
+      - The second law says entropy increases and heat won't flow uphill unaided
+      - No engine can convert all heat to work; some is always rejected
+
+  - id: pressure-gas
+    name: Pressure & Gas Behavior
+    summary: How gases respond to changes in pressure, volume, and temperature.
+    objective: Explain the pressure-volume-temperature relationship and why it matters for engines.
+    prereqs: [matter-states]
+    tier: 2
+    rubric:
+      - Pressure is force per unit area exerted by a gas
+      - Pressure, volume, and temperature of a gas are linked (gas laws)
+      - Compressing or heating a gas stores energy that can push a piston
+
+  - id: fuel-combustion
+    name: Fuels & Combustion
+    summary: How burning fuel releases stored chemical energy as heat.
+    objective: Explain what combustion is and what controls how much energy a fuel releases.
+    prereqs: [energy-forms]
+    tier: 2
+    rubric:
+      - Combustion is a rapid reaction of fuel with oxygen releasing heat
+      - A fuel's energy content sets how much heat it can release
+      - Complete combustion needs the right fuel-air mixture
+
+  - id: heat-engines
+    name: Heat Engines & Cycles
+    summary: Machines that convert heat into mechanical work by running a working fluid through a cycle.
+    objective: Explain the general heat-engine cycle and why a temperature difference is required.
+    prereqs: [thermodynamics-laws, pressure-gas]
+    tier: 3
+    rubric:
+      - A heat engine takes in heat, does work, and rejects waste heat
+      - It needs a hot source and a cold sink — a temperature difference
+      - Work comes from a working fluid expanding and being compressed in a cycle
+
+  - id: phase-change-cooling
+    name: Phase-Change Cooling
+    summary: Using a fluid's evaporation and condensation to move heat, exploiting latent heat.
+    objective: Explain how evaporating and condensing a refrigerant moves heat against its natural flow.
+    prereqs: [heat-transfer, matter-states]
+    tier: 3
+    rubric:
+      - Evaporating a fluid absorbs large amounts of latent heat
+      - Condensing it elsewhere releases that heat
+      - Cycling a fluid between the two moves heat from cold to hot with work input
+
+  - id: insulation
+    name: Insulation & Thermal Envelopes
+    summary: Slowing unwanted heat transfer to keep spaces warm or cool with less energy.
+    objective: Explain how insulation reduces heat flow and why it lowers heating/cooling loads.
+    prereqs: [heat-transfer]
+    tier: 3
+    rubric:
+      - Insulation resists conduction, convection, and radiation across a boundary
+      - A building's envelope sets how much heat leaks in or out
+      - Reducing leakage cuts the energy needed to hold a temperature
+
+  - id: internal-combustion
+    name: Internal Combustion Engine
+    summary: An engine that burns fuel inside cylinders to push pistons and produce rotary motion.
+    objective: Walk through the four-stroke cycle and how combustion becomes shaft work.
+    prereqs: [heat-engines, fuel-combustion]
+    tier: 4
+    rubric:
+      - Fuel-air is drawn in, compressed, ignited, and exhausted across the strokes
+      - Expanding combustion gases push a piston that turns a crankshaft
+      - It is a heat engine: only part of the fuel's energy becomes work
+
+  - id: refrigeration-cycle
+    name: Refrigeration / Vapor-Compression Cycle
+    summary: A heat engine run in reverse to pump heat from a cold space to a warm one.
+    objective: Trace the compressor-condenser-valve-evaporator loop and what each stage does.
+    prereqs: [heat-engines, phase-change-cooling]
+    tier: 4
+    rubric:
+      - A compressor raises refrigerant pressure and temperature
+      - The condenser sheds heat outside; the evaporator absorbs heat inside
+      - It moves heat against its natural direction using work input
+
+  - id: turbines
+    name: Turbines & Steam/Jet Engines
+    summary: Engines that extract work from a continuous flow of expanding gas or steam spinning a rotor.
+    objective: Explain how a turbine converts flowing fluid energy into continuous rotary work.
+    prereqs: [heat-engines]
+    tier: 4
+    rubric:
+      - A turbine extracts work as a fast fluid stream pushes angled blades
+      - Steam and gas turbines run continuously rather than in piston strokes
+      - They are heat engines, bounded by the same efficiency limits
+
+  - id: heat-pumps
+    name: Heat Pumps
+    summary: The refrigeration cycle used for heating — moving outside heat indoors efficiently.
+    objective: Explain why a heat pump can deliver more heat energy than the work it consumes.
+    prereqs: [refrigeration-cycle]
+    tier: 5
+    rubric:
+      - A heat pump is a refrigeration cycle whose useful output is the heat delivered
+      - It moves existing heat rather than generating it, so output exceeds work input
+      - Its efficiency falls as the indoor-outdoor temperature gap grows
+
+  - id: hvac-systems
+    name: HVAC Systems
+    summary: How heating, ventilation, and air conditioning combine to control indoor climate.
+    objective: Explain how HVAC integrates the cooling cycle, airflow, and the building envelope.
+    prereqs: [refrigeration-cycle, insulation, heat-transfer]
+    tier: 5
+    rubric:
+      - HVAC combines a refrigeration/heat-pump cycle with air distribution and ventilation
+      - The building envelope (insulation) sets the load the system must meet
+      - Sizing balances comfort, humidity, air quality, and energy use
+
+  - id: efficiency-engines
+    name: Engine Efficiency & Losses
+    summary: Why real engines waste much of their fuel energy and where it goes.
+    objective: Explain the main efficiency limits and loss paths in a real engine.
+    prereqs: [internal-combustion, thermodynamics-laws]
+    tier: 5
+    rubric:
+      - The second law caps the fraction of heat convertible to work
+      - Real losses include exhaust heat, friction, and cooling
+      - Efficiency improves by raising the hot-cold temperature gap and cutting losses

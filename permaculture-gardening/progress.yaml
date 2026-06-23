@@ -1,0 +1,70 @@
+subject: Permaculture Gardening
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   observation, soil-basics, sun-climate.
+# Recommended first step: observation, then soil-basics.
+mastery:
+  - id: observation
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: soil-basics
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: sun-climate
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: soil-fertility
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: composting
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: water-catchment
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: zones-sectors
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: bed-design
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: mulching
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: sowing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: perennials
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: companion-guilds
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: pest-management
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: harvest-seed-saving
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: closed-loop
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: food-forest
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

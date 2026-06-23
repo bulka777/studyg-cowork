@@ -1,0 +1,182 @@
+subject: Permaculture Gardening
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: an even blend of practical vegetable growing (soil, beds, sowing, pests, harvest)
+# and permaculture design (observation, zones, water, guilds, closing loops, food forests).
+# Recommended entry order among the tier-1 roots: observation -> soil-basics -> sun-climate.
+concepts:
+  - id: observation
+    name: Observe & Interact (Site Assessment)
+    summary: Watching a site across seasons before acting, so design follows what the land actually does.
+    objective: Explain why patient observation precedes intervention and what to look for on a site.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Permaculture design starts from sustained observation, not immediate action
+      - Key signals include sun paths, water flow, wind, existing plants, and soil condition
+      - Working with a site's patterns beats imposing a plan against them
+
+  - id: soil-basics
+    name: Soil & the Soil Food Web
+    summary: Soil as a living system of mineral particles, organic matter, and countless organisms.
+    objective: Describe what healthy soil is made of and why soil life matters to plants.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Soil combines mineral particles (sand/silt/clay), organic matter, air, and water
+      - A living food web of microbes, fungi, and invertebrates cycles nutrients
+      - Texture and structure govern drainage, aeration, and root growth
+
+  - id: sun-climate
+    name: Sun, Season & Microclimate
+    summary: How light, temperature, and frost windows over the year shape what grows when and where.
+    objective: Explain how sun and seasonal patterns, and local microclimates, constrain planting.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Sun angle and day length change with season, driving growth and timing
+      - Frost dates bound the growing season for each crop
+      - Microclimates (walls, slopes, shade) create warmer or cooler pockets within a site
+
+  - id: soil-fertility
+    name: Soil Fertility & Nutrients
+    summary: The nutrients plants need and how organic matter, amendments, and biology supply them.
+    objective: Explain what makes soil fertile and how to feed it without depleting it.
+    prereqs: [soil-basics]
+    tier: 2
+    rubric:
+      - Plants need macronutrients (N, P, K) and micronutrients, plus a workable pH
+      - Organic matter and soil biology release nutrients slowly and sustainably
+      - Feeding the soil (not just the plant) maintains long-term fertility
+
+  - id: composting
+    name: Composting & Organic Matter
+    summary: Turning garden and kitchen waste into stable humus that feeds the soil.
+    objective: Explain how composting works and the conditions a compost pile needs.
+    prereqs: [soil-basics]
+    tier: 2
+    rubric:
+      - Composting is decomposition managed with the right carbon-to-nitrogen balance
+      - Air, moisture, and a mix of greens and browns drive the process
+      - Finished compost returns organic matter and nutrients to the soil
+
+  - id: water-catchment
+    name: Water Catchment & Management
+    summary: Slowing, spreading, and storing water on site so plants are buffered against dry spells.
+    objective: Explain permaculture water strategies and why slowing runoff matters.
+    prereqs: [observation, sun-climate]
+    tier: 2
+    rubric:
+      - The aim is to slow, spread, and sink water rather than shed it quickly
+      - Reading slope and flow (from observation) guides swales, basins, and storage
+      - Storing water in soil and tanks buffers crops through dry periods
+
+  - id: zones-sectors
+    name: Zones & Sectors
+    summary: Organizing a site by how often you visit each area (zones) and by external energies (sectors).
+    objective: Explain zone-and-sector planning and how it reduces effort and harnesses natural forces.
+    prereqs: [observation]
+    tier: 2
+    rubric:
+      - Zones place frequently-tended elements closest to where you spend time
+      - Sectors map incoming energies (sun, wind, water, fire) to design around them
+      - Good placement minimizes labor and works with natural flows
+
+  - id: bed-design
+    name: Garden Beds & No-Dig
+    summary: Building productive beds and the no-dig approach that protects soil structure and life.
+    objective: Explain how beds are built and why no-dig methods benefit soil over time.
+    prereqs: [soil-basics]
+    tier: 2
+    rubric:
+      - Beds concentrate fertility and keep foot traffic off growing soil
+      - No-dig adds organic matter on top rather than turning soil over
+      - Protecting structure preserves the soil food web and reduces weeds
+
+  - id: mulching
+    name: Mulching
+    summary: Covering soil with organic material to conserve water, suppress weeds, and feed soil life.
+    objective: Explain what mulch does and how it ties water and fertility management together.
+    prereqs: [composting, water-catchment]
+    tier: 3
+    rubric:
+      - Mulch reduces evaporation and moderates soil temperature
+      - It suppresses weeds and, as it breaks down, feeds soil organic matter
+      - Bare soil is avoided; the soil surface is kept covered
+
+  - id: sowing
+    name: Sowing, Seasons & Succession
+    summary: Starting plants from seed or transplant and timing plantings across the season for continuous harvest.
+    objective: Explain how to time sowings and use succession planting for steady yields.
+    prereqs: [bed-design, sun-climate]
+    tier: 3
+    rubric:
+      - Crops are direct-sown or transplanted depending on type and season
+      - Sowing timing is set by frost dates and each crop's needs
+      - Succession sowing staggers plantings for a continuous harvest
+
+  - id: perennials
+    name: Perennial Plants & Polyculture
+    summary: Plants that persist year to year, forming the stable backbone of a low-input system.
+    objective: Explain the role of perennials and why permaculture favors them alongside annuals.
+    prereqs: [soil-fertility, zones-sectors]
+    tier: 3
+    rubric:
+      - Perennials regrow yearly, needing less soil disturbance and replanting
+      - They build deep roots, stable habitat, and long-term fertility
+      - A mix of perennials and annuals raises resilience over monoculture
+
+  - id: companion-guilds
+    name: Companion Planting & Guilds
+    summary: Grouping plants that support each other — fixing nitrogen, deterring pests, sharing space.
+    objective: Explain how companion planting and guilds use beneficial plant relationships.
+    prereqs: [sowing, soil-fertility]
+    tier: 4
+    rubric:
+      - Some plant combinations aid each other via nutrients, pest deterrence, or structure
+      - A guild assembles mutually supportive plants around a central one
+      - Polycultures spread risk and use space and light more fully than monocultures
+
+  - id: pest-management
+    name: Pests, Disease & Beneficials
+    summary: Managing pests by building a balanced ecosystem rather than relying on sprays.
+    objective: Explain ecological pest management and the role of beneficial organisms.
+    prereqs: [observation, sowing]
+    tier: 4
+    rubric:
+      - Diversity and habitat invite predators that keep pests in check
+      - Observation catches problems early and informs least-harm responses
+      - Healthy soil and right-place planting prevent much disease pressure
+
+  - id: harvest-seed-saving
+    name: Harvest & Seed Saving
+    summary: Picking crops at the right time and saving seed to close the loop and adapt varieties.
+    objective: Explain harvest timing and the basics of saving viable seed.
+    prereqs: [sowing]
+    tier: 4
+    rubric:
+      - Harvest timing affects flavor, yield, and whether a plant keeps producing
+      - Seed is saved from open-pollinated plants, dried and stored properly
+      - Saving seed cuts inputs and adapts varieties to local conditions
+
+  - id: closed-loop
+    name: Closing Loops & Self-Sufficiency
+    summary: Designing the garden so its outputs (compost, mulch, seed) become its own inputs.
+    objective: Explain how closing loops reduces external inputs and waste.
+    prereqs: [mulching, composting, harvest-seed-saving]
+    tier: 5
+    rubric:
+      - Wastes are treated as resources — clippings to mulch, scraps to compost, plants to seed
+      - On-site cycling reduces dependence on bought inputs
+      - A closed-loop system is more resilient and lower-cost over time
+
+  - id: food-forest
+    name: Food Forest & Whole-System Design
+    summary: A multi-layered planting that mimics a young woodland to produce food with little upkeep.
+    objective: Explain the layered structure of a food forest and how it integrates the whole system.
+    prereqs: [perennials, companion-guilds, zones-sectors]
+    tier: 5
+    rubric:
+      - A food forest stacks layers (canopy, shrub, herb, ground, root, vine) in one space
+      - It leans on perennials and guilds for a largely self-maintaining system
+      - It integrates water, zones, and soil strategies into one designed whole

@@ -83,6 +83,7 @@ concepts:
       - Synchronous replication is durable but slow; asynchronous is fast but can lose recent writes
       - Leader-follower and multi-leader topologies handle writes differently
       - Read replicas offload read traffic from the primary, improving throughput at the cost of possible staleness
+      - Multi-region replication places replicas in geographically separate data centres, reducing latency for distant users and surviving regional failures at the cost of higher replication lag
 
   - id: indexing
     name: Indexing
@@ -105,6 +106,17 @@ concepts:
       - Atomicity means all operations in a transaction succeed or all are rolled back — never partially applied
       - Isolation controls whether concurrent transactions can see each other's in-progress changes
       - Durability means a committed transaction survives crashes; consistency is application-level correctness enforced by constraints
+
+  - id: blob-storage
+    name: Object / Blob Storage
+    summary: Flat, key-based storage for large binary objects such as files, images, and video — designed for high durability and cheap at-scale reads, not structured queries.
+    objective: Distinguish object storage from databases and explain when it is the right choice.
+    prereqs: [data-models]
+    tier: 2
+    rubric:
+      - Object storage addresses data by an opaque key (bucket + object name); there is no schema, no joins, and no in-place mutation — objects are replaced wholesale
+      - It is optimised for high durability (erasure coding, geo-replication) and cheap sequential reads, not random access or low-latency point queries
+      - Common use cases are media files, backups, data lake landing zones, and serving static assets — anything too large or write-once for a relational database
 
   - id: api-design
     name: API Design (REST / RPC)
@@ -161,6 +173,39 @@ concepts:
       - Token bucket and sliding window are common algorithms; each has different burst characteristics
       - Limits can be enforced at the gateway, load balancer, or application layer
 
+  - id: cdn
+    name: Content Delivery Networks
+    summary: A geographically distributed network of edge servers that cache and serve content close to users to reduce latency and origin load.
+    objective: Explain how a CDN reduces latency for read-heavy workloads and what its limits are.
+    prereqs: [caching]
+    tier: 3
+    rubric:
+      - A CDN caches static and cacheable content at edge nodes near users, reducing round-trip time to the origin
+      - Push CDNs pre-populate edges; pull CDNs fetch from origin on first miss and cache the response
+      - Cache-control headers govern TTL at the edge; dynamic or personalised content typically bypasses the CDN
+
+  - id: authn-authz
+    name: Authentication & Authorization
+    summary: Verifying who a caller is (authentication) and deciding what they are allowed to do (authorization).
+    objective: Distinguish authentication from authorization and explain how tokens and policies enforce both at the API layer.
+    prereqs: [api-design]
+    tier: 3
+    rubric:
+      - Authentication proves identity; authorization decides permissions — they are separate concerns applied in sequence
+      - Stateless APIs use signed tokens (JWT, OAuth bearer) so any server instance can verify a request without shared session state
+      - Authorization is enforced by policies (RBAC, ABAC) applied after identity is confirmed; failing open is a critical security flaw
+
+  - id: push-communication
+    name: Real-time & Push Communication
+    summary: How servers deliver data to clients proactively — without the client polling — using persistent connections or server push.
+    objective: Compare long polling, Server-Sent Events, and WebSockets and justify the choice for a given real-time use case.
+    prereqs: [api-design, client-server]
+    tier: 3
+    rubric:
+      - Standard HTTP is request-driven; a client must poll to detect new data, wasting connections and adding latency
+      - Long polling holds the request open until data is ready; SSE streams one-directional events over HTTP; WebSockets provide a full-duplex persistent channel
+      - The right choice depends on directionality (server-only vs bidirectional) and acceptable latency
+
   - id: cap-theorem
     name: CAP & Availability Tradeoffs
     summary: Under a network partition a distributed store must choose between consistency and availability.
@@ -193,6 +238,28 @@ concepts:
       - A queue delivers a message to one consumer; an event log delivers the same event to all subscribers independently
       - Events are immutable facts; consumers can replay from any offset to reconstruct state or catch up
       - Ordering is guaranteed per partition, not globally, which constrains consumer design
+
+  - id: consistent-hashing
+    name: Consistent Hashing
+    summary: A ring-based mapping of keys to nodes so that adding or removing a node remaps only a small fraction of keys.
+    objective: Explain how consistent hashing minimises key remapping on membership changes and why virtual nodes improve balance.
+    prereqs: [load-balancing, partitioning]
+    tier: 4
+    rubric:
+      - Keys and nodes are mapped onto a ring; each key is owned by the next node clockwise
+      - When a node is added or removed, only the keys between it and its predecessor need remapping
+      - Virtual nodes (vnodes) give each physical node multiple positions on the ring, improving load balance
+
+  - id: batch-stream-processing
+    name: Batch vs Stream Processing
+    summary: Two architectural models for processing large volumes of data — bounded jobs on stored data versus continuous processing of an unbounded event stream.
+    objective: Contrast batch and stream processing and explain what each gains and gives up on latency, fault tolerance, and complexity.
+    prereqs: [message-queues, partitioning]
+    tier: 4
+    rubric:
+      - Batch processing runs periodic jobs over a bounded, stored dataset; it maximises throughput but introduces latency proportional to the batch interval
+      - Stream processing operates on an unbounded sequence of events as they arrive, targeting low latency at the cost of more complex state management
+      - Hybrid architectures (Lambda, Kappa) layer batch accuracy over streaming speed, trading operational complexity for query correctness
 
   - id: consistency-models
     name: Consistency Models
@@ -228,6 +295,39 @@ concepts:
       - Timeouts bound how long a caller waits; retries with backoff reduce thundering herd; circuit breakers stop calling a known-failing dependency
       - Bulkheads isolate failure domains so one slow dependency cannot exhaust the caller's thread pool
 
+  - id: observability
+    name: Observability
+    summary: The ability to infer a distributed system's internal state from its external outputs — logs, metrics, and traces.
+    objective: Distinguish the three pillars of observability and explain what each reveals about a running system.
+    prereqs: [microservices]
+    tier: 5
+    rubric:
+      - Logs record discrete events; metrics aggregate state over time; distributed traces link spans across service boundaries
+      - A single request in a microservices system produces spans in many services; a trace ID threads them into a single timeline
+      - Observability is a design property — systems must emit structured, correlated signals to be debuggable in production
+
+  - id: service-discovery
+    name: Service Discovery
+    summary: How services in a distributed system locate each other's network addresses without hard-coding them.
+    objective: Contrast client-side and server-side discovery and explain how a service registry keeps the address list fresh.
+    prereqs: [microservices]
+    tier: 5
+    rubric:
+      - In a dynamic environment, service instances come and go; their addresses cannot be static configuration
+      - A service registry (Consul, etcd, Kubernetes DNS) holds a live list of healthy instances that services query
+      - Client-side discovery has the caller choose an instance; server-side discovery delegates that choice to a load balancer or proxy
+
+  - id: saga
+    name: Distributed Transactions & Sagas
+    summary: Achieving atomicity across multiple services when a single ACID transaction is impossible.
+    objective: Explain why distributed transactions are hard and how the Saga pattern achieves eventual consistency across services.
+    prereqs: [transactions-acid, microservices]
+    tier: 5
+    rubric:
+      - A distributed transaction cannot rely on a single lock manager; two-phase commit (2PC) is slow and a coordinator single point of failure
+      - A saga breaks a cross-service operation into a sequence of local transactions, each with a compensating transaction to undo it on failure
+      - Sagas achieve eventual consistency, not ACID isolation; intermediate states are visible and must be designed for
+
   - id: consensus
     name: Consensus & Leader Election
     summary: Getting multiple nodes to agree on a single value or leader despite failures.
@@ -239,3 +339,14 @@ concepts:
       - A quorum (majority) is needed to make progress safely
       - Algorithms like Raft/Paxos provide leader election and an ordered, replicated log
       - The primary product is a totally ordered, replicated log; leader election is the mechanism that maintains it
+
+  - id: logical-clocks
+    name: Logical Clocks & Causality
+    summary: How distributed nodes establish ordering and causality among events without relying on synchronised wall clocks.
+    objective: Explain why wall clocks are unreliable for ordering in distributed systems and what Lamport timestamps and vector clocks provide instead.
+    prereqs: [consistency-models]
+    tier: 6
+    rubric:
+      - Wall clocks on distributed nodes drift and cannot be trusted for event ordering; two events can share the same timestamp or be mis-ordered
+      - Lamport timestamps give a total order consistent with causality but cannot detect concurrent events
+      - Vector clocks track causality per node; if neither clock dominates the other, the events are concurrent and require conflict resolution

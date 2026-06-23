@@ -1,0 +1,194 @@
+subject: Electricity & Electromagnetism
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: how electricity works from charge up to the power grid and electric vehicles —
+# circuits, electromagnetic induction, motors, batteries, and power electronics.
+# Answers "how does electricity work" and "how do electric cars work" from shared foundations.
+# Recommended entry order among the tier-1 roots: electric-charge -> materials-conduction -> magnetism.
+concepts:
+  - id: electric-charge
+    name: Charge & Electric Fields
+    summary: Positive and negative charge, the force between charges, and the field that carries it.
+    objective: Explain what electric charge is and how charges exert force through a field.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Charge comes in positive and negative; like repel, unlike attract
+      - The force between charges acts through an electric field
+      - Charge is conserved and, at small scale, quantized
+
+  - id: magnetism
+    name: Magnetism & Magnetic Fields
+    summary: Magnetic poles, the fields around them, and the forces they exert on moving charge.
+    objective: Describe magnetic fields and how they relate to moving electric charge.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Magnets have north and south poles that attract or repel
+      - A magnetic field exerts force on moving charges and currents
+      - Moving charge is itself the source of magnetism
+
+  - id: materials-conduction
+    name: Conductors, Insulators & Semiconductors
+    summary: Why some materials carry current freely, some block it, and some sit in between.
+    objective: Explain what determines whether a material conducts electricity.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Conductors have mobile charge carriers; insulators do not
+      - Semiconductors conduct under controllable conditions
+      - Conduction depends on a material's atomic and electronic structure
+
+  - id: voltage-current
+    name: Voltage, Current & Resistance
+    summary: The push (voltage), the flow (current), and the opposition (resistance) of electricity.
+    objective: Define voltage, current, and resistance and relate them via Ohm's law.
+    prereqs: [electric-charge, materials-conduction]
+    tier: 2
+    rubric:
+      - Voltage is the energy per charge that drives current
+      - Current is the rate of charge flow; resistance opposes it
+      - Ohm's law relates the three: current = voltage / resistance
+
+  - id: circuits
+    name: Electric Circuits
+    summary: Closed loops through which current flows, arranged in series and parallel.
+    objective: Analyze how series and parallel arrangements split voltage and current.
+    prereqs: [voltage-current]
+    tier: 3
+    rubric:
+      - Current flows only in a complete closed loop
+      - Series elements share current; parallel elements share voltage
+      - Components combine to control where energy is delivered
+
+  - id: ac-dc
+    name: AC vs DC
+    summary: Direct current that flows one way versus alternating current that reverses periodically.
+    objective: Compare AC and DC and explain why each is used where it is.
+    prereqs: [voltage-current]
+    tier: 3
+    rubric:
+      - DC flows in one direction; AC reverses direction periodically
+      - AC is easy to transform between voltages, suiting transmission
+      - DC suits batteries and electronics; conversion between them is routine
+
+  - id: electromagnetic-induction
+    name: Electromagnetic Induction
+    summary: A changing magnetic field induces a voltage — the link between electricity and magnetism.
+    objective: State Faraday's idea and explain why a changing field, not a static one, induces current.
+    prereqs: [magnetism, voltage-current]
+    tier: 3
+    rubric:
+      - A changing magnetic field through a loop induces a voltage
+      - Relative motion between magnet and coil produces current
+      - This induction underlies generators, motors, and transformers
+
+  - id: resistive-heating
+    name: Resistive Heating & Power
+    summary: How current through resistance dissipates electrical energy as heat and light.
+    objective: Explain how electrical power becomes heat and how it scales with current and resistance.
+    prereqs: [voltage-current]
+    tier: 3
+    rubric:
+      - Power delivered is voltage times current
+      - Current through resistance dissipates energy as heat
+      - This is useful (heaters, incandescent light) and a loss (wasted heat) at once
+
+  - id: capacitance-inductance
+    name: Capacitance & Inductance
+    summary: Components that store energy in electric fields (capacitors) and magnetic fields (inductors).
+    objective: Explain how capacitors and inductors store and release energy in a circuit.
+    prereqs: [circuits, electromagnetic-induction]
+    tier: 4
+    rubric:
+      - A capacitor stores energy in an electric field between plates
+      - An inductor stores energy in a magnetic field around a coil
+      - Both resist sudden change, shaping how circuits respond over time
+
+  - id: motors-generators
+    name: Motors & Generators
+    summary: Machines that turn electricity into motion (motors) and motion into electricity (generators).
+    objective: Explain how induction lets the same principle run a motor or a generator.
+    prereqs: [electromagnetic-induction]
+    tier: 4
+    rubric:
+      - A generator uses motion to induce current; a motor uses current to produce motion
+      - Both rely on the force between magnetic fields and current-carrying coils
+      - The two are essentially the same machine run in opposite directions
+
+  - id: transformers
+    name: Transformers
+    summary: Devices that step AC voltage up or down using coupled coils and a changing field.
+    objective: Explain how a transformer changes voltage and why it needs AC.
+    prereqs: [electromagnetic-induction, ac-dc]
+    tier: 4
+    rubric:
+      - Two coils coupled by a magnetic core trade voltage for current
+      - The turns ratio sets how voltage steps up or down
+      - It works only with changing (AC) current, since induction needs change
+
+  - id: batteries
+    name: Batteries & Electrochemical Cells
+    summary: Storing energy in chemical bonds and releasing it as direct current on demand.
+    objective: Explain how a battery converts chemical energy into electrical energy.
+    prereqs: [voltage-current, materials-conduction]
+    tier: 3
+    rubric:
+      - A cell drives current via a chemical reaction across two electrodes
+      - Voltage comes from the reaction's energy; capacity from the amount of reactant
+      - Rechargeables reverse the reaction by applying current
+
+  - id: semiconductors-electronics
+    name: Semiconductors & Electronics
+    summary: Using controllable conductors to build diodes and transistors that switch and amplify.
+    objective: Explain how semiconductors enable switching and control of current.
+    prereqs: [materials-conduction, circuits]
+    tier: 4
+    rubric:
+      - Doping tunes a semiconductor's conduction to make junctions
+      - Diodes pass current one way; transistors switch or amplify it
+      - These switches are the building blocks of all modern electronics
+
+  - id: power-grid
+    name: The Power Grid
+    summary: How electricity is generated, transmitted at high voltage, and distributed to users.
+    objective: Trace electricity from generator to outlet and explain why transmission uses high voltage.
+    prereqs: [transformers, ac-dc, motors-generators]
+    tier: 5
+    rubric:
+      - Generators produce AC that transformers step up for transmission
+      - High voltage cuts current and thus resistive losses over distance
+      - Distribution steps voltage back down for safe end use; supply must match demand live
+
+  - id: ev-powertrain
+    name: Electric Vehicle Powertrain
+    summary: How a battery, controller, and electric motor move a car without combustion.
+    objective: Explain the EV energy path from battery to wheels and the role of regenerative braking.
+    prereqs: [motors-generators, batteries]
+    tier: 5
+    rubric:
+      - A battery pack feeds a controller that drives an electric motor
+      - The motor delivers torque directly, with no combustion or gearbox stages
+      - Regenerative braking runs the motor as a generator to recover energy
+
+  - id: power-electronics
+    name: Power Electronics
+    summary: Circuits that convert and control electrical power — inverters and converters.
+    objective: Explain what inverters and converters do and why EVs and the grid need them.
+    prereqs: [semiconductors-electronics, ac-dc]
+    tier: 5
+    rubric:
+      - Inverters turn DC into AC; converters change voltage levels
+      - Fast semiconductor switching shapes the output waveform efficiently
+      - They link DC batteries/solar to AC motors and the AC grid
+
+  - id: distribution-safety
+    name: Wiring, Grounding & Safety
+    summary: How buildings are wired and protected so electricity is delivered without harm.
+    objective: Explain the role of grounding, fuses, and breakers in a safe circuit.
+    prereqs: [circuits, resistive-heating]
+    tier: 4
+    rubric:
+      - Grounding gives fault current a safe path and references voltage
+      - Fuses and breakers cut current before wires overheat
+      - Safe wiring sizes conductors to the current they must carry

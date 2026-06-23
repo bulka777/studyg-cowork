@@ -15,6 +15,7 @@
       --text:             #1f2328;
       --muted:            #656d76;
       --link:             #0969da;
+      --accent:           #0969da;
 
       --understood:       #1a7f37;
       --understood-bg:    #dafbe1;
@@ -28,6 +29,9 @@
       --frontier-bg:      #ddf4ff;
       --frontier-border:  #54aeff;
       --frontier-text:    #0550ae;
+
+      --header-h:         52px;
+      --sidebar-w:        224px;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -38,6 +42,7 @@
         --text:             #e6edf3;
         --muted:            #8b949e;
         --link:             #58a6ff;
+        --accent:           #58a6ff;
 
         --understood:       #3fb950;
         --understood-bg:    #0d2e17;
@@ -54,47 +59,102 @@
       }
     }
 
+    html, body { height: 100%; }
+
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       font-size: 14px;
       line-height: 1.6;
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 32px 16px 64px;
-    }
-
-    /* ── Header ── */
-    header {
       display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 32px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
+      flex-direction: column;
     }
-    header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
-    header .subtitle { color: var(--muted); font-size: 14px; }
 
-    /* ── Subject card ── */
-    .subject {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 28px;
+    /* Header */
+    header {
+      height: var(--header-h);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    header h1     { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+    header .sep   { color: var(--border); }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    /* Shell */
+    .shell { display: flex; flex: 1; overflow: hidden; }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .subject-tab {
+      display: block;
+      width: 100%;
+      padding: 10px 14px;
+      background: none;
+      border: none;
+      border-left: 3px solid transparent;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.1s;
+    }
+    .subject-tab:hover  { background: var(--surface); }
+    .subject-tab.active { background: var(--surface); border-left-color: var(--accent); }
+
+    .tab-name {
+      font-weight: 500;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-bar-wrap { margin: 5px 0 4px; }
+    .tab-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
       overflow: hidden;
     }
-
-    .subject-header {
-      padding: 20px 24px 18px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+    .tab-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--understood);
+      transition: width 0.3s;
     }
-    .subject-header h2 { font-size: 17px; font-weight: 600; }
-    .subject-header .desc { color: var(--muted); margin-top: 3px; font-size: 13px; }
+    .tab-bar-fill.has-shaky { background: var(--shaky); }
+    .tab-meta { font-size: 11px; color: var(--muted); display: flex; gap: 8px; }
+    .tab-due  { color: var(--link); font-weight: 500; }
+
+    /* Main */
+    #main { flex: 1; overflow-y: auto; padding: 28px 32px 56px; }
+
+    .placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+    }
+
+    /* Detail header */
+    .detail-header { margin-bottom: 20px; }
+    .detail-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+    .detail-header .desc { color: var(--muted); margin-top: 4px; font-size: 14px; max-width: 640px; }
 
     /* Progress bar */
-    .progress-wrap { margin-top: 14px; }
+    .progress-wrap  { margin-bottom: 16px; }
     .progress-labels {
       display: flex;
       justify-content: space-between;
@@ -104,222 +164,172 @@
     }
     .progress-labels .shaky-label { color: var(--shaky); }
     .progress-bar {
-      height: 7px;
-      border-radius: 4px;
-      background: var(--border);
-      overflow: hidden;
-      display: flex;
+      height: 8px; border-radius: 4px;
+      background: var(--border); overflow: hidden; display: flex;
+      margin-bottom: 12px;
     }
     .bar-understood  { background: var(--understood); }
     .bar-encountered { background: var(--encountered); }
     .bar-shaky       { background: var(--shaky); }
 
     /* Pills */
-    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
     .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 2px 9px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 500;
     }
     .pill.understood { color: var(--understood); background: var(--understood-bg); }
     .pill.encountered{ color: var(--encountered); background: var(--encountered-bg); }
     .pill.shaky      { color: var(--shaky);       background: var(--shaky-bg); }
     .pill.unseen     { color: var(--unseen);       background: var(--unseen-bg); }
-    .pill.cards-due  { color: var(--link); background: var(--frontier-bg); }
+    .pill.cards-due  { color: var(--link);         background: var(--frontier-bg); }
 
-    /* Body */
-    .subject-body {
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
+    /* Sections */
+    .section { margin-top: 24px; }
     .section-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      margin-bottom: 10px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 10px;
     }
 
-    /* ── Frontier ── */
+    /* Frontier */
     .frontier-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .frontier-item {
       padding: 9px 13px;
       background: var(--frontier-bg);
       border: 1px solid var(--frontier-border);
       border-radius: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 6px;
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
     }
-    .frontier-item .cname { font-weight: 500; color: var(--frontier-text); }
-    .frontier-item .csummary { font-size: 13px; color: var(--frontier-text); opacity: 0.75; }
+    .frontier-item .cname    { font-weight: 500; color: var(--frontier-text); }
+    .frontier-item .csummary { font-size: 13px;  color: var(--frontier-text); opacity: 0.75; }
 
-    /* ── Concept map (collapsible) ── */
-    details {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-    }
+    /* Collapsible */
+    details { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
     details summary {
-      padding: 10px 14px;
-      cursor: pointer;
-      font-weight: 500;
-      background: var(--surface);
-      user-select: none;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      padding: 10px 14px; cursor: pointer;
+      font-weight: 500; font-size: 13px;
+      background: var(--surface); user-select: none;
+      list-style: none; display: flex; align-items: center; gap: 6px;
     }
     details summary::-webkit-details-marker { display: none; }
     details summary::before {
-      content: "▶";
-      font-size: 10px;
-      color: var(--muted);
-      transition: transform 0.15s;
-      display: inline-block;
+      content: "▶"; font-size: 9px; color: var(--muted);
+      transition: transform 0.15s; display: inline-block; flex-shrink: 0;
     }
     details[open] summary::before { transform: rotate(90deg); }
     details summary:hover { background: var(--border); }
 
+    /* Concept map */
     .concept-grid { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
-
-    .tier-block {}
     .tier-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      margin-bottom: 7px;
-      padding-left: 16px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 6px; padding-left: 16px;
     }
-    .concept-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-      padding: 3px 0;
-    }
+    .concept-row { display: flex; align-items: flex-start; gap: 9px; padding: 2px 0; }
     .state-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      margin-top: 6px;
+      width: 7px; height: 7px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 6px;
     }
     .state-dot.understood  { background: var(--understood); }
     .state-dot.encountered { background: var(--encountered); }
     .state-dot.shaky       { background: var(--shaky); }
     .state-dot.unseen      { background: var(--border); }
-    .cname  { font-weight: 500; }
+    .cname    { font-weight: 500; font-size: 13px; }
     .csummary { color: var(--muted); font-size: 13px; }
 
-    /* ── Deep dives ── */
-    .dive-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .dive-item {
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
+    /* Deep dives */
+    .dive-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+    .dive-item { padding: 11px 13px; border: 1px solid var(--border); border-radius: 6px; }
     .dive-item:hover { border-color: var(--link); }
     .dive-item a {
-      color: var(--link);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 14px;
+      color: var(--link); text-decoration: none;
+      font-weight: 500; font-size: 13px;
     }
     .dive-item a:hover { text-decoration: underline; }
     .dive-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--muted);
+      display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: center; margin-top: 3px;
+      font-size: 12px; color: var(--muted);
     }
     .dive-concepts { font-style: italic; }
     .mint-badge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1px 7px;
-      font-size: 11px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1px 7px; font-size: 11px;
     }
-    .dive-summary { font-size: 13px; color: var(--muted); margin-top: 5px; }
+    .dive-summary { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-    /* ── States ── */
-    .loading, .error { text-align: center; color: var(--muted); padding: 48px; }
-    .error { color: var(--shaky); }
+    .loading-msg { color: var(--muted); padding: 12px 14px; font-size: 13px; }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      html, body { height: auto; }
+      .shell { flex-direction: column; overflow: visible; }
+      #sidebar {
+        width: 100%; border-right: none; border-bottom: 1px solid var(--border);
+        overflow-x: auto; overflow-y: hidden;
+        display: flex; flex-direction: row; padding: 0;
+      }
+      .subject-tab {
+        border-left: none; border-bottom: 3px solid transparent;
+        flex-shrink: 0; padding: 8px 14px; white-space: nowrap;
+      }
+      .subject-tab.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+      .tab-bar-wrap, .tab-meta { display: none; }
+      #main { padding: 20px 16px 40px; overflow-y: visible; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>studyg</h1>
+    <span class="sep">/</span>
     <span class="subtitle">Personal learning system</span>
   </header>
-  <main id="app">
-    <p class="loading">Loading…</p>
-  </main>
+
+  <div class="shell">
+    <nav id="sidebar"><p class="loading-msg">Loading&#8230;</p></nav>
+    <main id="main"><div class="placeholder">Loading&#8230;</div></main>
+  </div>
 
   <script>
-    /* ── Utilities ── */
-
+    /* Utilities */
     async function fetchYaml(url) {
       try {
         const res = await fetch(url);
         if (!res.ok) return null;
         return jsyaml.load(await res.text());
-      } catch (e) {
-        console.warn('Failed to fetch', url, e);
-        return null;
-      }
+      } catch (e) { console.warn('fetch failed', url, e); return null; }
     }
 
-    function esc(str) {
-      if (str == null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function fmtDate(d) {
       if (!d) return '';
       const date = d instanceof Date ? d : new Date(d);
-      if (isNaN(date)) return String(d);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      return isNaN(date) ? String(d) : date.toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
     }
 
     function toDateStr(d) {
       if (!d) return '';
-      if (d instanceof Date) return d.toISOString().slice(0, 10);
-      return String(d).slice(0, 10);
+      return (d instanceof Date ? d.toISOString() : String(d)).slice(0, 10);
     }
 
-    /* ── Data helpers ── */
-
+    /* Data helpers */
     function buildMasteryMap(progress) {
       const m = {};
-      for (const entry of (progress?.mastery ?? [])) m[entry.id] = entry;
+      for (const e of (progress?.mastery ?? [])) m[e.id] = e;
       return m;
     }
 
     function computeStats(progress) {
-      const counts = { understood: 0, encountered: 0, shaky: 0, unseen: 0 };
-      for (const entry of (progress?.mastery ?? [])) {
-        counts[entry.state] = (counts[entry.state] ?? 0) + 1;
-      }
-      return counts;
+      const c = { understood: 0, encountered: 0, shaky: 0, unseen: 0 };
+      for (const e of (progress?.mastery ?? [])) c[e.state] = (c[e.state] ?? 0) + 1;
+      return c;
     }
 
     function computeFrontier(map, masteryMap) {
@@ -330,76 +340,88 @@
       });
     }
 
-    function countDueCards(cards) {
+    function countDue(cards) {
       const today = new Date().toISOString().slice(0, 10);
       return (cards?.cards ?? []).filter(c => toDateStr(c.due) <= today).length;
     }
 
     function lastActive(progress) {
-      const dates = (progress?.mastery ?? [])
-        .map(m => toDateStr(m.last_reviewed))
-        .filter(Boolean)
-        .sort();
+      const dates = (progress?.mastery ?? []).map(m => toDateStr(m.last_reviewed)).filter(Boolean).sort();
       return dates.at(-1) ?? null;
     }
 
-    /* ── Render ── */
+    /* Sidebar */
+    function renderSidebarItem(subject, idx, isActive) {
+      const counts = computeStats(subject.progress);
+      const total  = Object.values(counts).reduce((a, b) => a + b, 0);
+      const due    = countDue(subject.cards);
+      const pct    = total ? Math.round(counts.understood / total * 100) : 0;
 
-    function renderSubject(subject) {
-      const { map, progress, dives, cards, folder } = subject;
-      const masteryMap = buildMasteryMap(progress);
-      const counts     = computeStats(progress);
+      return `
+<button class="subject-tab${isActive ? ' active' : ''}" onclick="selectSubject(${idx})" title="${esc(subject.name)}">
+  <div class="tab-name">${esc(subject.name)}</div>
+  <div class="tab-bar-wrap">
+    <div class="tab-bar">
+      <div class="tab-bar-fill${counts.shaky > 0 ? ' has-shaky' : ''}" style="width:${pct}%"></div>
+    </div>
+  </div>
+  <div class="tab-meta">
+    <span>${counts.understood}/${total}</span>
+    ${due > 0 ? `<span class="tab-due">${due} due</span>` : ''}
+  </div>
+</button>`;
+    }
+
+    function refreshSidebar() {
+      document.getElementById('sidebar').innerHTML =
+        subjects.map((s, i) => renderSidebarItem(s, i, i === activeIdx)).join('');
+    }
+
+    /* Main detail */
+    function renderDetail(subject) {
+      const masteryMap = buildMasteryMap(subject.progress);
+      const counts     = computeStats(subject.progress);
       const total      = Object.values(counts).reduce((a, b) => a + b, 0);
-      const frontier   = computeFrontier(map, masteryMap);
-      const due        = countDueCards(cards);
-      const active     = lastActive(progress);
+      const frontier   = computeFrontier(subject.map, masteryMap);
+      const due        = countDue(subject.cards);
+      const active     = lastActive(subject.progress);
+      const pct        = k => total ? (counts[k] / total * 100).toFixed(1) : 0;
 
-      const pct = k => total ? (counts[k] / total * 100).toFixed(1) : 0;
-
-      // Group concepts by tier
       const byTier = {};
-      for (const c of (map?.concepts ?? [])) {
+      for (const c of (subject.map?.concepts ?? [])) {
         const t = c.tier ?? 0;
         (byTier[t] = byTier[t] ?? []).push(c);
       }
+      const tiers    = Object.keys(byTier).sort((a, b) => Number(a) - Number(b));
+      const diveList = subject.dives?.deep_dives ?? [];
 
       return `
-<section class="subject">
-  <div class="subject-header">
-    <h2>${esc(map?.subject ?? subject.name)}</h2>
-    ${subject.description ? `<p class="desc">${esc(subject.description)}</p>` : ''}
-    <div class="progress-wrap">
-      <div class="progress-labels">
-        <span>${counts.understood} of ${total} concepts understood${active ? ` · last active ${fmtDate(active)}` : ''}</span>
-        ${counts.shaky > 0 ? `<span class="shaky-label">${counts.shaky} shaky</span>` : ''}
-      </div>
-      <div class="progress-bar">
-        <div class="bar-understood"  style="width:${pct('understood')}%"></div>
-        <div class="bar-encountered" style="width:${pct('encountered')}%"></div>
-        <div class="bar-shaky"       style="width:${pct('shaky')}%"></div>
-      </div>
-    </div>
-    <div class="pills">
-      ${counts.understood  > 0 ? `<span class="pill understood">&#10003; ${counts.understood} understood</span>` : ''}
-      ${counts.encountered > 0 ? `<span class="pill encountered">&#126; ${counts.encountered} encountered</span>` : ''}
-      ${counts.shaky       > 0 ? `<span class="pill shaky">&#10005; ${counts.shaky} shaky</span>` : ''}
-      ${counts.unseen      > 0 ? `<span class="pill unseen">&#9702; ${counts.unseen} unseen</span>` : ''}
-      ${due                > 0 ? `<span class="pill cards-due">&#128337; ${due} card${due !== 1 ? 's' : ''} due</span>` : ''}
-    </div>
-  </div>
+<div class="detail-header">
+  <h2>${esc(subject.map?.subject ?? subject.name)}</h2>
+  ${subject.description ? `<p class="desc">${esc(subject.description)}</p>` : ''}
+</div>
 
-  <div class="subject-body">
-    ${renderFrontier(frontier)}
-    ${renderConcepts(byTier, masteryMap, total)}
-    ${renderDives(dives, folder)}
+<div class="progress-wrap">
+  <div class="progress-labels">
+    <span>${counts.understood} of ${total} concepts understood${active ? ` \u00b7 last active ${fmtDate(active)}` : ''}</span>
+    ${counts.shaky > 0 ? `<span class="shaky-label">${counts.shaky} shaky</span>` : ''}
   </div>
-</section>`;
-    }
+  <div class="progress-bar">
+    <div class="bar-understood"  style="width:${pct('understood')}%"></div>
+    <div class="bar-encountered" style="width:${pct('encountered')}%"></div>
+    <div class="bar-shaky"       style="width:${pct('shaky')}%"></div>
+  </div>
+  <div class="pills">
+    ${counts.understood  > 0 ? `<span class="pill understood">&#10003; ${counts.understood} understood</span>` : ''}
+    ${counts.encountered > 0 ? `<span class="pill encountered">&#126; ${counts.encountered} encountered</span>` : ''}
+    ${counts.shaky       > 0 ? `<span class="pill shaky">&#10005; ${counts.shaky} shaky</span>` : ''}
+    ${counts.unseen      > 0 ? `<span class="pill unseen">&#9702; ${counts.unseen} unseen</span>` : ''}
+    ${due                > 0 ? `<span class="pill cards-due">&#128337; ${due} card${due !== 1 ? 's' : ''} due</span>` : ''}
+  </div>
+</div>
 
-    function renderFrontier(frontier) {
-      if (!frontier.length) return '';
-      return `
-<div>
+${frontier.length ? `
+<div class="section">
   <div class="section-title">Ready to learn</div>
   <ul class="frontier-list">
     ${frontier.map(c => `
@@ -408,72 +430,76 @@
       ${c.summary ? `<span class="csummary">${esc(c.summary)}</span>` : ''}
     </li>`).join('')}
   </ul>
-</div>`;
-    }
+</div>` : ''}
 
-    function renderConcepts(byTier, masteryMap, total) {
-      const tiers = Object.keys(byTier).sort((a, b) => Number(a) - Number(b));
-      if (!tiers.length) return '';
-      return `
-<details>
-  <summary>All concepts (${total})</summary>
-  <div class="concept-grid">
-    ${tiers.map(t => `
-    <div class="tier-block">
-      <div class="tier-label">Tier ${t}</div>
-      ${byTier[t].map(c => {
-        const state = masteryMap[c.id]?.state ?? 'unseen';
+${tiers.length ? `
+<div class="section">
+  <details>
+    <summary>Concept map <span style="font-weight:400;color:var(--muted)">(${total})</span></summary>
+    <div class="concept-grid">
+      ${tiers.map(t => `
+      <div>
+        <div class="tier-label">Tier ${t}</div>
+        ${byTier[t].map(c => {
+          const state = masteryMap[c.id]?.state ?? 'unseen';
+          return `
+        <div class="concept-row">
+          <span class="state-dot ${state}"></span>
+          <div>
+            <span class="cname">${esc(c.name)}</span>
+            ${c.summary ? `<span class="csummary"> \u2014 ${esc(c.summary)}</span>` : ''}
+          </div>
+        </div>`;
+        }).join('')}
+      </div>`).join('')}
+    </div>
+  </details>
+</div>` : ''}
+
+${diveList.length ? `
+<div class="section">
+  <details>
+    <summary>Deep dives <span style="font-weight:400;color:var(--muted)">(${diveList.length})</span></summary>
+    <ul class="dive-list">
+      ${diveList.map(d => {
+        const path  = `${subject.folder}${d.file}`;
+        const title = d.source_title || d.id;
         return `
-      <div class="concept-row">
-        <span class="state-dot ${state}"></span>
-        <div>
-          <span class="cname">${esc(c.name)}</span>
-          ${c.summary ? `<span class="csummary"> — ${esc(c.summary)}</span>` : ''}
+      <li class="dive-item">
+        <a href="${esc(path)}" target="_blank" rel="noopener noreferrer">${esc(title)}</a>
+        <div class="dive-meta">
+          ${d.generated   ? `<span>${fmtDate(d.generated)}</span>` : ''}
+          ${d.concepts?.length ? `<span class="dive-concepts">${d.concepts.map(esc).join(', ')}</span>` : ''}
+          ${d.cards_minted ? '<span class="mint-badge">cards minted</span>' : ''}
         </div>
-      </div>`;
+        ${d.summary ? `<p class="dive-summary">${esc(d.summary)}</p>` : ''}
+      </li>`;
       }).join('')}
-    </div>`).join('')}
-  </div>
-</details>`;
+    </ul>
+  </details>
+</div>` : ''}`;
     }
 
-    function renderDives(dives, folder) {
-      const list = dives?.deep_dives ?? [];
-      if (!list.length) return '';
-      return `
-<div>
-  <div class="section-title">Deep dives (${list.length})</div>
-  <ul class="dive-list">
-    ${list.map(d => {
-      const path  = `${folder}${d.file}`;
-      const title = d.source_title || d.id;
-      return `
-    <li class="dive-item">
-      <a href="${esc(path)}" target="_blank" rel="noopener noreferrer">${esc(title)}</a>
-      <div class="dive-meta">
-        ${d.generated ? `<span>${fmtDate(d.generated)}</span>` : ''}
-        ${d.concepts?.length  ? `<span class="dive-concepts">${d.concepts.map(esc).join(', ')}</span>` : ''}
-        ${d.cards_minted ? '<span class="mint-badge">cards minted</span>' : ''}
-      </div>
-      ${d.summary ? `<p class="dive-summary">${esc(d.summary)}</p>` : ''}
-    </li>`;
-    }).join('')}
-  </ul>
-</div>`;
+    /* State */
+    let subjects  = [];
+    let activeIdx = 0;
+
+    function selectSubject(idx) {
+      activeIdx = idx;
+      refreshSidebar();
+      document.getElementById('main').innerHTML = renderDetail(subjects[idx]);
     }
 
-    /* ── Main ── */
-
+    /* Boot */
     async function main() {
-      const app = document.getElementById('app');
-
       const index = await fetchYaml('index.yaml');
       if (!index?.subjects?.length) {
-        app.innerHTML = '<p class="error">Could not load index.yaml — make sure GitHub Pages is serving from the repo root.</p>';
+        document.getElementById('sidebar').innerHTML = '';
+        document.getElementById('main').innerHTML = '<div class="placeholder">Could not load index.yaml</div>';
         return;
       }
 
-      const subjects = await Promise.all(index.subjects.map(async s => {
+      subjects = await Promise.all(index.subjects.map(async s => {
         const [map, progress, dives, cards] = await Promise.all([
           fetchYaml(s.map),
           fetchYaml(s.progress),
@@ -483,7 +509,8 @@
         return { ...s, map, progress, dives, cards };
       }));
 
-      app.innerHTML = subjects.map(renderSubject).join('');
+      refreshSidebar();
+      selectSubject(0);
     }
 
     main();
