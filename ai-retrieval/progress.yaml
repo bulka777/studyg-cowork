@@ -5,12 +5,12 @@ subject: AI Retrieval
 # Recommended first step: lexical-search, then embeddings.
 mastery:
   - id: lexical-search
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: embeddings
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: chunking
     state: unseen

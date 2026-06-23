@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: HNSW & Vector Similarity Search</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2e3348;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --accent: #7c6bff;
+    --accent2: #4ecdc4;
+    --warn: #f59e0b;
+    --green: #34d399;
+    --red: #f87171;
+    --code-bg: #111827;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    line-height: 1.75;
+    font-size: 17px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  /* Sidebar nav */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 2rem 1.2rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar h3 {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    font-family: monospace;
+  }
+  .sidebar a {
+    display: block;
+    padding: 0.4rem 0.6rem;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    margin-bottom: 0.2rem;
+    line-height: 1.4;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover { color: var(--text); background: var(--surface2); }
+  .sidebar a.active { color: var(--accent); background: rgba(124,107,255,0.1); }
+  .sidebar .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--border);
+    margin: 1.2rem 0 0.4rem 0.6rem;
+    font-family: monospace;
+  }
+  /* Main content */
+  .main {
+    max-width: 780px;
+    padding: 3rem 2.5rem 6rem;
+    margin: 0 auto;
+    width: 100%;
+  }
+  /* Header */
+  .dive-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .dive-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.72rem;
+    font-family: monospace;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-concept { background: rgba(124,107,255,0.2); color: var(--accent); border: 1px solid rgba(124,107,255,0.3); }
+  .badge-date { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  h1 { font-size: 2rem; line-height: 1.25; color: var(--text); font-weight: 700; margin-bottom: 0.75rem; }
+  .dive-byline { color: var(--muted); font-size: 0.9rem; }
+  .dive-byline a { color: var(--accent2); text-decoration: none; }
+  .dive-byline a:hover { text-decoration: underline; }
+  /* Article section */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-tag {
+    font-size: 0.65rem;
+    font-family: monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .tag-source { background: rgba(78,205,196,0.15); color: var(--accent2); border: 1px solid rgba(78,205,196,0.3); }
+  .tag-learn { background: rgba(124,107,255,0.15); color: var(--accent); border: 1px solid rgba(124,107,255,0.3); }
+  .tag-model { background: rgba(245,158,11,0.15); color: var(--warn); border: 1px solid rgba(245,158,11,0.3); }
+  h2 { font-size: 1.35rem; color: var(--text); }
+  /* Article attribution box */
+  .attribution-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .attribution-box strong { color: var(--text); }
+  .attribution-box a { color: var(--accent2); text-decoration: none; }
+  .attribution-box a:hover { text-decoration: underline; }
+  /* Prose */
+  p { margin-bottom: 1.1rem; }
+  h3 { font-size: 1.1rem; color: var(--text); margin: 2rem 0 0.75rem; font-weight: 600; }
+  h4 { font-size: 0.95rem; color: var(--accent); margin: 1.5rem 0 0.5rem; font-family: monospace; letter-spacing: 0.03em; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.3rem; }
+  /* Divider */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3.5rem 0;
+  }
+  /* Callout boxes */
+  .callout {
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+  }
+  .callout-insight {
+    background: rgba(124,107,255,0.08);
+    border: 1px solid rgba(124,107,255,0.25);
+    border-left: 3px solid var(--accent);
+  }
+  .callout-sourced {
+    background: rgba(78,205,196,0.07);
+    border: 1px solid rgba(78,205,196,0.2);
+    border-left: 3px solid var(--accent2);
+  }
+  .callout-model {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-left: 3px solid var(--warn);
+  }
+  .callout-label {
+    font-size: 0.65rem;
+    font-family: monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+  .callout-insight .callout-label { color: var(--accent); }
+  .callout-sourced .callout-label { color: var(--accent2); }
+  .callout-model .callout-label { color: var(--warn); }
+  /* Stat callout */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.88rem;
+  }
+  th {
+    background: var(--surface2);
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    font-family: monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid rgba(46,51,72,0.5);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+  /* Code */
+  code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 0.85em;
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    color: var(--accent2);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+  /* Interactive: layer diagram */
+  .layer-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .layer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.65rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .layer:hover { background: var(--surface2); }
+  .layer-num {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    width: 50px;
+    flex-shrink: 0;
+  }
+  .layer-bar-wrap { flex: 1; }
+  .layer-bar {
+    height: 10px;
+    border-radius: 4px;
+    background: var(--accent);
+    opacity: 0.7;
+    transition: all 0.2s;
+  }
+  .layer:hover .layer-bar { opacity: 1; }
+  .layer-desc { font-size: 0.82rem; color: var(--muted); min-width: 200px; text-align: right; }
+  .layer-0 .layer-bar { background: var(--accent); }
+  .layer-1 .layer-bar { background: #9b8bff; }
+  .layer-2 .layer-bar { background: #b9aeff; }
+  .layer-3 .layer-bar { background: #d6d0ff; }
+  /* Parameter tuning widget */
+  .param-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .param-widget h4 { margin-top: 0; color: var(--text); font-family: Georgia, serif; font-size: 0.95rem; margin-bottom: 1.2rem; }
+  .param-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 60px;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .param-label { font-family: monospace; font-size: 0.85rem; color: var(--accent2); }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .param-val { font-family: monospace; color: var(--text); text-align: right; font-size: 0.9rem; }
+  .param-output {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    margin-top: 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .param-out-item { text-align: center; }
+  .param-out-num { font-size: 1.3rem; font-weight: 700; font-family: monospace; color: var(--accent); display: block; }
+  .param-out-label { font-size: 0.72rem; color: var(--muted); }
+  /* History timeline */
+  .timeline { margin: 1.5rem 0; }
+  .tl-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: 39px;
+    top: 24px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-year {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    padding-top: 0.35rem;
+    text-align: right;
+  }
+  .tl-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    left: 35px;
+    top: 6px;
+    border: 2px solid var(--bg);
+  }
+  .tl-content h4 { margin: 0 0 0.3rem; font-size: 0.92rem; color: var(--text); font-family: Georgia, serif; }
+  .tl-content p { font-size: 0.85rem; color: var(--muted); margin: 0; }
+  /* Recall chart */
+  .recall-chart {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .recall-chart h4 { margin: 0 0 1.2rem; font-size: 0.9rem; color: var(--muted); font-family: monospace; }
+  .chart-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px 80px;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .chart-ef { font-family: monospace; color: var(--accent2); }
+  .chart-bar-wrap { position: relative; }
+  .chart-bar {
+    height: 24px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.78rem;
+    color: white;
+    font-family: monospace;
+  }
+  .chart-row:hover .chart-bar { opacity: 1; }
+  .chart-qps { font-family: monospace; color: var(--green); text-align: right; }
+  .chart-latency { font-family: monospace; color: var(--muted); text-align: right; }
+  /* seam note */
+  .seam-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-style: italic;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+    padding-top: 1rem;
+    line-height: 1.6;
+  }
+  .seam-note strong { color: var(--warn); }
+  /* links */
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--text); }
+  /* responsive */
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 2rem 1.2rem 4rem; }
+    .stat-row { grid-template-columns: 1fr 1fr; }
+    .param-row { grid-template-columns: 100px 1fr 50px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <h3>Deep Dive</h3>
+    <a href="#article" class="active">📄 Article</a>
+    <div class="section-label">Contextualized Learning</div>
+    <a href="#why-ann">Why ANN exists</a>
+    <a href="#history">Algorithm lineage</a>
+    <a href="#mechanism">HNSW mechanism</a>
+    <a href="#params">The 3 parameters</a>
+    <a href="#tradeoffs">Recall vs speed</a>
+    <a href="#limits">Where it breaks</a>
+    <a href="#pipeline">In the pipeline</a>
+    <div class="section-label">Concept</div>
+    <a href="#concept">vector-similarity</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="dive-header" id="top">
+      <div class="dive-meta">
+        <span class="badge badge-concept">vector-similarity</span>
+        <span class="badge badge-date">2026-06-23</span>
+      </div>
+      <h1>HNSW: The Algorithm Powering Fast Vector Search</h1>
+      <p class="dive-byline">
+        Article by <strong>Tullie Murrell</strong> · <a href="https://www.shaped.ai/blog/hnsw-explained-the-algorithm-powering-fast-vector-search" target="_blank">shaped.ai</a> · April 30, 2026<br>
+        Contextualized for <em>AI Retrieval</em> concept map → <strong>vector-similarity</strong> (frontier)
+      </p>
+    </div>
+
+    <!-- ── PART 1: THE ARTICLE ── -->
+    <div id="article">
+      <div class="section-header">
+        <span class="section-tag tag-source">Source Article</span>
+        <h2>HNSW Explained: The Algorithm Powering Fast Vector Search</h2>
+      </div>
+
+      <div class="attribution-box">
+        <strong>Title:</strong> HNSW Explained: The Algorithm Powering Fast Vector Search<br>
+        <strong>Author:</strong> Tullie Murrell · <strong>Publication:</strong> Shaped Blog<br>
+        <strong>Date:</strong> April 30, 2026 · <strong>URL:</strong>
+        <a href="https://www.shaped.ai/blog/hnsw-explained-the-algorithm-powering-fast-vector-search" target="_blank">shaped.ai/blog/hnsw-explained…</a>
+      </div>
+
+      <div class="callout callout-sourced">
+        <div class="callout-label">Key number (sourced)</div>
+        HNSW at default settings delivers <strong>96% recall at 44× the throughput of brute-force search</strong>. The three parameters it exposes — <code>M</code>, <code>ef_construction</code>, and <code>ef</code> — directly control where on that trade-off your system sits.
+      </div>
+
+      <h3>The Problem: Finding Nearest Neighbors at Scale</h3>
+      <p>Every vector database solves the same fundamental problem: you have millions of items represented as high-dimensional vectors (typically 256–1536 dimensions). When a query arrives, find the items whose vectors are most similar to the query vector. That's nearest neighbor search.</p>
+      <p>The naive solution — compute the distance from the query to every item (brute-force / flat index) — is perfectly accurate but completely unusable at scale. Searching one million 768-dimensional vectors takes roughly 2–3 seconds on modern hardware. At 10 million items: 20–30 seconds. Real systems need results in under 50 milliseconds.</p>
+      <p><strong>Approximate nearest neighbor (ANN) search</strong> accepts a small, controlled accuracy trade-off in exchange for orders-of-magnitude speed improvements. Instead of the provably closest vectors, ANN finds vectors very likely to be among the closest — typically 95–99% recall while running 50–200× faster than brute force.</p>
+
+      <h3>A Brief History</h3>
+      <ul>
+        <li><strong>KD-Trees:</strong> Work in low dimensions (&lt;20) but degrade exponentially with the curse of dimensionality. Unsuitable for modern embeddings.</li>
+        <li><strong>Locality-Sensitive Hashing (LSH):</strong> Hashes similar vectors to the same buckets. Fast to build, but inconsistent recall.</li>
+        <li><strong>Navigable Small World (NSW) graphs:</strong> Direct HNSW predecessor. Connect each vector to approximate nearest neighbors; navigate greedily. Degrades at scale: distant random entry points mean long traversals.</li>
+        <li><strong>HNSW (Malkov &amp; Yashunin, 2018):</strong> Adds hierarchy to NSW. Sparse upper layers for fast coarse navigation; dense bottom layer for precise local search. Near-constant query time as the index grows.</li>
+      </ul>
+
+      <h3>How HNSW Works</h3>
+      <p>HNSW organizes vectors in a multi-layer graph. Each layer is a navigable small world graph. Layer 0 contains <em>every</em> vector with many short-range connections. Higher layers contain progressively fewer vectors with longer-range connections — a zoom-out view of the same space.</p>
+
+      <div class="layer-diagram">
+        <div style="font-size:0.75rem;font-family:monospace;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Graph layer structure (width = node density)</div>
+        <div class="layer layer-3">
+          <span class="layer-num">Layer 3</span>
+          <div class="layer-bar-wrap"><div class="layer-bar" style="width:8%"></div></div>
+          <span class="layer-desc">~1% of nodes · long-range highways</span>
+        </div>
+        <div class="layer layer-2">
+          <span class="layer-num">Layer 2</span>
+          <div class="layer-bar-wrap"><div class="layer-bar" style="width:20%"></div></div>
+          <span class="layer-desc">~5% of nodes · medium range</span>
+        </div>
+        <div class="layer layer-1">
+          <span class="layer-num">Layer 1</span>
+          <div class="layer-bar-wrap"><div class="layer-bar" style="width:45%"></div></div>
+          <span class="layer-desc">~20% of nodes · denser</span>
+        </div>
+        <div class="layer layer-0">
+          <span class="layer-num">Layer 0</span>
+          <div class="layer-bar-wrap"><div class="layer-bar" style="width:100%"></div></div>
+          <span class="layer-desc">100% of nodes · short-range, precise</span>
+        </div>
+      </div>
+
+      <p><strong>Search proceeds in two phases:</strong></p>
+      <ol>
+        <li><strong>Coarse navigation (Phase 1):</strong> Enter at the designated entry point at the top layer. Greedily navigate downward — at each layer, move to the neighbor closest to the query, then descend. Runs in O(log n) time. Think: the highway, fast long-distance travel.</li>
+        <li><strong>Fine search (Phase 2):</strong> Arrive at layer 0 in approximately the right region. Switch to beam search using a dynamic candidate list of size <code>ef</code>. Explore the local neighborhood thoroughly, maintaining a priority queue of the best candidates seen. Return the top-K.</li>
+      </ol>
+
+      <h3>A Concrete Example with Actual Distances</h3>
+      <div class="callout callout-sourced">
+        <div class="callout-label">Sourced (article walkthrough)</div>
+        <p style="margin:0"><strong>Layer 2:</strong> Entry E (dist 0.91) → move to A (0.62) → descend<br>
+        <strong>Layer 1:</strong> Enter at A → D (0.55) → F (0.49) → H (0.44) → descend<br>
+        <strong>Layer 0:</strong> Beam search ef=50, enter at H → best result N at distance 0.09<br><br>
+        ~100 nodes evaluated total to find the answer in a corpus of 1 million. Brute force: all 1 million.</p>
+      </div>
+
+      <h3>The Three Parameters</h3>
+
+      <h4>M — connections per node</h4>
+      <p><code>M</code> is the number of bidirectional links each node maintains at layer 0 (M/2 at higher layers). Higher M = denser graph = better recall, more memory, longer build time.</p>
+      <table>
+        <thead><tr><th>M</th><th>Use case</th><th>Memory vs flat index</th></tr></thead>
+        <tbody>
+          <tr><td>8–12</td><td>Memory-constrained, lower recall OK</td><td>~1.5–2×</td></tr>
+          <tr><td>16</td><td>Standard default (right for most)</td><td>~2.5×</td></tr>
+          <tr><td>32</td><td>High-recall, memory available</td><td>~4×</td></tr>
+          <tr><td>64+</td><td>Near-exact recall required</td><td>~7×</td></tr>
+        </tbody>
+      </table>
+
+      <h4>ef_construction — build-time search width</h4>
+      <p>Controls candidates evaluated when finding neighbors <em>during index construction</em>. Higher = better graph quality = better recall. Cost: longer build only. Rule of thumb: at least <code>2 × M</code>; standard range 100–200.</p>
+
+      <h4>ef (ef_search) — query-time search width</h4>
+      <p>Controls the dynamic candidate list size during layer-0 beam search. Must be ≥ k. <strong>The only parameter you can tune without rebuilding the index.</strong></p>
+      <table>
+        <thead><tr><th>ef</th><th>Recall@10</th><th>Use case</th></tr></thead>
+        <tbody>
+          <tr><td>10</td><td>~85–90%</td><td>Acceptable for feeds</td></tr>
+          <tr><td>50</td><td>~95–97%</td><td>Most production systems ←</td></tr>
+          <tr><td>100</td><td>~98%</td><td>Thorough search</td></tr>
+          <tr><td>200</td><td>~99.5%</td><td>Near-exact (e.g. RAG pipelines)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Diagnosing Production Problems</h3>
+      <table>
+        <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Recall too low</td><td>ef too small</td><td>Increase ef (no rebuild)</td></tr>
+          <tr><td>Still low after ef increase</td><td>M too small or poor ef_construction</td><td>Rebuild with higher M, ef_construction</td></tr>
+          <tr><td>Queries too slow</td><td>ef too large</td><td>Decrease ef</td></tr>
+          <tr><td>Too much memory</td><td>M too large</td><td>Rebuild with lower M</td></tr>
+          <tr><td>Recall degrades over time</td><td>Index bloat from deletions</td><td>Periodic full index rebuilds</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Where HNSW Breaks Down</h3>
+      <ul>
+        <li><strong>Memory at billion scale:</strong> A 1B vector index (M=16, 768-dim) requires ~4–8 TB RAM. Use distributed HNSW, IVF-PQ, or ScaNN instead.</li>
+        <li><strong>Heavy deletion workloads:</strong> HNSW tombstones deletes rather than removing them. 20%+ monthly turnover → plan for periodic full rebuilds.</li>
+        <li><strong>Skewed distributions:</strong> Greedy navigation assumes roughly uniform distribution. Heavy clustering → search can get trapped in popular clusters, missing sparser regions.</li>
+      </ul>
+
+      <h3>HNSW vs Alternatives</h3>
+      <table>
+        <thead><tr><th>Algorithm</th><th>Speed</th><th>Recall</th><th>Memory</th><th>Incremental updates</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td>HNSW</td><td>Very fast</td><td>Very high</td><td>High</td><td>Yes</td><td>1M–100M vectors</td></tr>
+          <tr><td>IVF-Flat (FAISS)</td><td>Fast</td><td>High</td><td>Medium</td><td>Batch only</td><td>Large batches, moderate recall</td></tr>
+          <tr><td>IVF-PQ (FAISS)</td><td>Very fast</td><td>Medium</td><td>Low</td><td>Batch only</td><td>Billion scale, memory-constrained</td></tr>
+          <tr><td>ScaNN (Google)</td><td>Very fast</td><td>Very high</td><td>Medium</td><td>Batch only</td><td>Billion scale, accuracy critical</td></tr>
+          <tr><td>Annoy (Spotify)</td><td>Medium</td><td>Medium</td><td>Medium</td><td>No</td><td>Static indexes</td></tr>
+          <tr><td>Brute force</td><td>Very slow</td><td>100%</td><td>Low</td><td>Instant</td><td>&lt;100K vectors</td></tr>
+        </tbody>
+      </table>
+      <p>HNSW's key advantage over IVF methods: <strong>incremental updates</strong> without full rebuilds. Critical for catalogs that change constantly.</p>
+
+      <h3>HNSW in a Production Retrieval Stack</h3>
+      <p>HNSW handles candidate generation — narrowing a catalog of millions to hundreds for downstream ranking:</p>
+      <pre><code>Full catalog (10M items)
+        ↓
+HNSW retrieval     ~5ms   → ~500 candidates
+        ↓
+Filtering          remove out-of-stock, seen items, etc.
+        ↓
+Scoring model      ~20ms  LightGBM / neural ranker → top 200
+        ↓
+Diversity reorder  ~2ms
+        ↓
+Top-10 results     total &lt; 50ms</code></pre>
+      <div class="callout callout-insight">
+        <div class="callout-label">Key insight (sourced)</div>
+        "HNSW can only find what the embedding model puts near the query vector… The embedding space is upstream of everything. HNSW maximises recall within the space you give it. Getting the embedding space right is at least as important as getting the HNSW parameters right." — Tullie Murrell, Shaped
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ── PART 2: CONTEXTUALIZED LEARNING ── -->
+    <div id="why-ann">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>Why ANN Exists: The Curse of Dimensionality</h2>
+      </div>
+
+      <p>To understand why HNSW was invented, you have to feel the specific pain it solves. Imagine your embedding model maps every product description to a 768-dimensional vector. Now a user searches "comfortable running shoes." Your system has embedded that query, and it wants the 10 product vectors that are geometrically closest to the query vector.</p>
+
+      <p>With 1,000 products, brute force is fine: check all 1,000, return the closest 10. But at 1 million products, brute force means computing 1 million cosine similarities. At 10 million: 10 million. Each similarity computation involves multiplying and summing 768 numbers. The cost grows linearly with catalog size — and at the latencies real users expect (under 50ms), linearity is a death sentence at scale.</p>
+
+      <div class="callout callout-model">
+        <div class="callout-label">Simplified model</div>
+        Think of exact nearest-neighbor search as having to read every book in a library to find the most relevant one. ANN is having a librarian who knows the layout well enough to walk you to the right section in seconds, occasionally missing a book that was misshelved — but almost never missing one you'd actually want.
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-box">
+          <span class="stat-num">2–3s</span>
+          <div class="stat-label">Brute force at 1M vectors, 768 dims</div>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">5ms</span>
+          <div class="stat-label">HNSW at ef=50, same corpus</div>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">96%</span>
+          <div class="stat-label">Recall retained at that speed</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="history">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>Algorithm Lineage: From KD-Trees to HNSW</h2>
+      </div>
+
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-year">1975</div>
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <h4>KD-Trees (k-dimensional trees)</h4>
+            <p>Partition vector space into a binary tree. Each split divides on one dimension. Works brilliantly in 2D and 3D (think: spatial databases). In high dimensions, nearly every point is "close" to the edge of each partition — the tree loses all discriminative power above ~20 dimensions.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-year">1998</div>
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <h4>Locality-Sensitive Hashing (LSH)</h4>
+            <p>Hash similar vectors into the same buckets with high probability using random projections. Works in high dimensions. Problem: achieving high recall requires many hash tables and many hash functions, ballooning memory and making recall hard to predict or tune. Inconsistency makes it hard to operationalize.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-year">2011</div>
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <h4>Navigable Small World (NSW)</h4>
+            <p>Build a graph: each new vector is connected to its approximate nearest neighbors among vectors already in the graph. To search: enter the graph at a random point, greedily move to the neighbor closest to the query, repeat until no improvement. The "small world" property (like the "six degrees of separation" in social networks) means the average path length between any two nodes is logarithmically short. NSW works but fails to scale: starting from a distant random entry point still requires O(log n · k) hops across a flat graph.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-year">2016/2018</div>
+          <div class="tl-dot"></div>
+          <div class="tl-content">
+            <h4>HNSW — Malkov &amp; Yashunin</h4>
+            <p>The key insight: add a hierarchy of NSW graphs at different densities. Upper layers are sparse (exponentially fewer nodes) and act as fast-navigation highways. The bottom layer is dense and performs precise local search. Navigation through upper layers takes O(log n); the expensive local exploration only starts once you're already close to the answer. Published in 2016, accepted to IEEE TPAMI in 2018. Now the de-facto standard in virtually every production vector database (Pinecone, Weaviate, Qdrant, Milvus, pgvector, etc.).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="mechanism">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>The Mechanism Beneath: What "Small World" Actually Means</h2>
+      </div>
+
+      <p>The "Small World" in HNSW borrows from network science. In a small-world network, most nodes are not directly connected to most other nodes, yet any node can reach any other node in a surprisingly small number of hops. This is the social-network phenomenon: you're probably within 6 handshakes of any stranger on earth.</p>
+
+      <p>NSW graphs have this property because of how they're constructed: when inserting a new vector, you connect it to its approximate nearest neighbors among vectors already inserted. Early insertions form long-range connections (because there aren't many vectors yet). Later insertions add dense local connections. The result is a graph that mixes long-range "shortcuts" with dense local neighborhoods — exactly the topology that enables efficient greedy navigation.</p>
+
+      <div class="callout callout-model">
+        <div class="callout-label">Simplified model</div>
+        Think of HNSW's layer structure like a city's transit system. Layer 3 is the intercontinental flight network — few hubs, enormous distances skipped instantly. Layer 2 is regional rail. Layer 1 is the subway. Layer 0 is walking. You don't walk from New York to San Francisco. You fly to the right city (coarse), take the train to the right district (medium), take the subway to the right block (fine), then walk to the exact address (beam search). HNSW does the exact same thing with vectors.
+      </div>
+
+      <p>The exponential decay in layer assignment is intentional. When a new vector is inserted, its maximum layer is drawn from a geometric distribution: <code>floor(-ln(random()) × mL)</code> where <code>mL = 1/ln(M)</code>. This means roughly 1/e ≈ 37% of vectors exist only in layer 0, 37%×37% ≈ 14% exist in layers 0–1, and so on. The result is the pyramid density shown above.</p>
+
+      <h4>Why greedy navigation works</h4>
+      <p>Greedy navigation — always move to the neighbor closest to the query — should, in theory, get stuck in local minima easily. In practice it rarely does, for two reasons:</p>
+      <ol>
+        <li><strong>Upper layers prevent distant local minima:</strong> By the time you descend to layer 0, you're already in approximately the right region of the space. Local minima near the query are much more likely to be global minima than local minima elsewhere in the space.</li>
+        <li><strong>Beam search at layer 0:</strong> Rather than pure greedy (keep only the single best candidate), layer-0 search maintains a candidate list of size <code>ef</code>. This makes the search a beam search — exploring multiple paths simultaneously — which dramatically reduces the chance of terminating in a poor local minimum.</li>
+      </ol>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="params">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>Interactive: Parameter Explorer</h2>
+      </div>
+
+      <p>Use the sliders to understand what each parameter actually controls and how they interact. Estimates based on performance tables from the article (1M vectors, 768 dims, modern cloud hardware).</p>
+
+      <div class="param-widget">
+        <h4>Tune your HNSW parameters</h4>
+        <div class="param-row">
+          <span class="param-label">M</span>
+          <input type="range" id="slider-m" min="8" max="64" value="16" step="4">
+          <span class="param-val" id="val-m">16</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">ef_construction</span>
+          <input type="range" id="slider-efc" min="50" max="400" value="200" step="50">
+          <span class="param-val" id="val-efc">200</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">ef (query)</span>
+          <input type="range" id="slider-ef" min="10" max="500" value="50" step="10">
+          <span class="param-val" id="val-ef">50</span>
+        </div>
+        <div class="param-output" id="param-output">
+          <div class="param-out-item">
+            <span class="param-out-num" id="out-recall">96%</span>
+            <div class="param-out-label">Estimated Recall@10</div>
+          </div>
+          <div class="param-out-item">
+            <span class="param-out-num" id="out-qps">3,500</span>
+            <div class="param-out-label">Approx. Queries/sec</div>
+          </div>
+          <div class="param-out-item">
+            <span class="param-out-num" id="out-mem">2.5×</span>
+            <div class="param-out-label">Memory vs flat index</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="tradeoffs">
+      <div class="section-header">
+        <span class="section-tag tag-source">Sourced Data</span>
+        <h2>Recall vs Speed: The Trade-off in Concrete Numbers</h2>
+      </div>
+
+      <p>All figures from the article: 1M vector index, 768-dimensional, M=16, ef_construction=200, modern cloud hardware.</p>
+
+      <div class="recall-chart">
+        <h4>ef → recall@10 / throughput trade-off</h4>
+        <div class="chart-row" style="font-size:0.72rem;color:var(--muted);">
+          <div>ef</div><div>recall@10</div><div class="chart-qps">queries/sec</div><div class="chart-latency">p99 latency</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-ef">ef=10</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="width:88%">88%</div></div>
+          <div class="chart-qps">8,000</div>
+          <div class="chart-latency">~2ms</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-ef">ef=50</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="width:96%">96%</div></div>
+          <div class="chart-qps">3,500</div>
+          <div class="chart-latency">~5ms</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-ef">ef=100</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="width:98%">98%</div></div>
+          <div class="chart-qps">2,000</div>
+          <div class="chart-latency">~9ms</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-ef">ef=200</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="width:99.5%">99.5%</div></div>
+          <div class="chart-qps">1,000</div>
+          <div class="chart-latency">~18ms</div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-ef">brute-force</div>
+          <div class="chart-bar-wrap"><div class="chart-bar" style="width:100%;background:var(--muted)">100%</div></div>
+          <div class="chart-qps">80</div>
+          <div class="chart-latency">~200ms</div>
+        </div>
+      </div>
+
+      <div class="callout callout-insight">
+        <div class="callout-label">Pattern to internalize</div>
+        Going from ef=10 to ef=50 costs 2.3× throughput and gains 8 points of recall. Going from ef=50 to ef=200 costs 3.5× throughput and gains only 3.5 points. The curve is strongly convex — most of the recall benefit comes cheaply; the final percentage points are expensive. This is why ef=50 is the standard production default.
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="limits">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>Where HNSW Breaks Down: The Assumptions It Makes</h2>
+      </div>
+
+      <p>Every algorithm has a regime where its assumptions stop holding. Understanding HNSW's failure modes is as important as understanding its strengths.</p>
+
+      <h3>Memory at Billion Scale</h3>
+      <p>HNSW stores the graph structure in RAM. Each node needs space for its embedding vector plus its M adjacency entries. For a 1B-vector index at M=16 and 768 dimensions, this is roughly 4–8 TB of RAM — practical only for large distributed deployments. Below ~100M vectors you're fine on a single machine; above that you're looking at distributed HNSW or quantization-aware alternatives (IVF-PQ, ScaNN).</p>
+
+      <h3>The Deletion Problem</h3>
+      <p>HNSW was designed for insert-heavy workloads. Deletions are implemented as tombstones — the node is marked deleted but its edges remain. This means:</p>
+      <ul>
+        <li>Search still traverses deleted nodes during navigation (they're used for routing, just not returned)</li>
+        <li>Memory isn't reclaimed</li>
+        <li>With high deletion rates, the graph becomes increasingly full of dead ends, gradually degrading recall</li>
+      </ul>
+
+      <h3>Skewed Distributions</h3>
+      <div class="callout callout-model">
+        <div class="callout-label">Simplified model</div>
+        Imagine a map of the world where 80% of the population lives in three cities. HNSW builds a graph that's extremely dense in those cities. When you search for something in a sparsely populated region, greedy navigation can get "sucked into" a dense city and then fail to escape to find the correct sparse-region answer. Average recall looks fine because 80% of queries come from the dense cities — but segment-level recall for sparse regions is poor. Always monitor recall <em>segmented by query type</em>, not just averaged.
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div id="pipeline">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Contextualized Learning</span>
+        <h2>HNSW's Place in the Full Retrieval Pipeline</h2>
+      </div>
+
+      <p>It's easy to treat HNSW as the whole retrieval story. It isn't. It's the <em>candidate generation</em> stage — the layer responsible for going from "entire catalog" to "a tractable set of candidates" that downstream components can work with.</p>
+
+      <div class="callout callout-insight">
+        <div class="callout-label">Connecting to your concept map</div>
+        In the AI Retrieval concept map, <strong>vector-similarity</strong> (this article's main concept) is the prerequisite for <strong>vector-store</strong>, which is the prerequisite for <strong>basic-rag</strong>. Understanding HNSW means you now understand <em>how</em> a vector store executes approximate nearest-neighbor queries — not just that it does them. That mechanism is the core of what makes vector stores viable at production scale.
+      </div>
+
+      <p>The embedding model creates the space. HNSW navigates that space efficiently. A reranker (if present) then rescores the candidates HNSW returns, applying a more expensive but more accurate model to a tractable number of candidates. The system only works as a whole: great embeddings + poor HNSW parameters = slow or inaccurate retrieval; perfect HNSW parameters + poor embeddings = fast retrieval of the wrong results.</p>
+
+      <h3>What HNSW Cannot Fix</h3>
+      <p>If your embedding model places "memory foam insoles, orthopedic support" far from "comfortable running shoes" in vector space — HNSW will not fix that. It is a search algorithm over an embedding space. Improving the embedding model is upstream of everything. HNSW maximizes recall within the space you give it; it cannot reshape that space.</p>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ── CONCEPT CARD ── -->
+    <div id="concept">
+      <div class="section-header">
+        <span class="section-tag tag-learn">Concept Map</span>
+        <h2>vector-similarity (frontier concept)</h2>
+      </div>
+
+      <div class="callout callout-sourced" style="margin-bottom:1.5rem;">
+        <div class="callout-label">From AI Retrieval map</div>
+        <strong>Objective:</strong> Describe how similarity search retrieves the closest vectors to a query.<br><br>
+        <strong>Rubric:</strong><br>
+        1. A similarity measure (e.g. cosine) scores how close two vectors are<br>
+        2. Retrieval means finding the nearest vectors to a query vector<br>
+        3. Exact nearest-neighbor is costly, motivating approximate methods
+      </div>
+
+      <h3>Rubric point 1: Cosine similarity</h3>
+      <p>The most common similarity measure for embeddings is <strong>cosine similarity</strong> — the cosine of the angle between two vectors. It equals the dot product of their unit-normalized forms. Score ranges from -1 (opposite direction) to +1 (same direction). Unlike Euclidean distance, cosine similarity ignores magnitude, which means "this is good" and "this is very very good" (different lengths but same direction) score the same — often the right behavior for semantic similarity.</p>
+
+      <h3>Rubric point 2: Nearest-neighbor retrieval</h3>
+      <p>Retrieval means: given query vector q, find the K vectors in the index that maximize similarity(q, v). For cosine similarity, this is equivalent to finding the K vectors with the smallest angle to q. HNSW navigates the vector graph to find these K vectors without checking every node.</p>
+
+      <h3>Rubric point 3: Why approximate methods are necessary</h3>
+      <p>Exact K-NN requires computing similarity to every vector in the index — O(n) per query. At millions of high-dimensional vectors, this is seconds per query. ANN methods like HNSW accept a small recall penalty (a few missed results that were very close in similarity to the true top-K) in exchange for query times in the millisecond range. This trade-off is almost always worth it: the missed results are so close in similarity score to the returned results that downstream systems (ranking models, generators) see negligible quality difference.</p>
+    </div>
+
+    <div class="seam-note">
+      <strong>Seam note:</strong> Text in blue/teal boxes is <strong>sourced truth</strong> — drawn directly from the article or its cited paper (Malkov &amp; Yashunin 2018, arxiv.org/abs/1603.09320). Text in amber boxes is <strong>simplified model</strong> — generated illustration to aid intuition. Text in purple boxes is <strong>analytical inference</strong> — derived from sourced claims but not directly quoted. Numbers in the performance table are from the Shaped.ai article; your mileage may vary with different hardware, dimensionality, and ef_construction settings.
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Parameter widget logic
+const sliderM = document.getElementById('slider-m');
+const sliderEfc = document.getElementById('slider-efc');
+const sliderEf = document.getElementById('slider-ef');
+const valM = document.getElementById('val-m');
+const valEfc = document.getElementById('val-efc');
+const valEf = document.getElementById('val-ef');
+const outRecall = document.getElementById('out-recall');
+const outQps = document.getElementById('out-qps');
+const outMem = document.getElementById('out-mem');
+
+function estimateRecall(ef, M, efc) {
+  // Based on article data (ef at M=16, efc=200): 10→88%, 50→96%, 100→98%, 200→99.5%
+  // Adjust for M (higher M improves recall at same ef) and efc (higher efc improves graph quality)
+  const baseRecall = Math.min(100, 78 + 12 * Math.log(ef / 5) / Math.log(10));
+  const mBonus = (M - 16) * 0.08;
+  const efcBonus = (efc - 200) / 200 * 0.5;
+  return Math.min(99.8, Math.max(70, baseRecall + mBonus + efcBonus));
+}
+
+function estimateQps(ef, M) {
+  // At M=16: ef=10→8000, ef=50→3500, ef=100→2000, ef=200→1000
+  const base = 35000 / (ef * 0.9 + 5);
+  const mPenalty = M > 16 ? Math.pow(M / 16, 0.6) : 1;
+  return Math.round(base / mPenalty / 100) * 100;
+}
+
+function memMultiplier(M) {
+  if (M <= 8) return '1.5×';
+  if (M <= 12) return '2×';
+  if (M <= 16) return '2.5×';
+  if (M <= 32) return '4×';
+  return '7×';
+}
+
+function updateWidget() {
+  const m = parseInt(sliderM.value);
+  const efc = parseInt(sliderEfc.value);
+  const ef = parseInt(sliderEf.value);
+  valM.textContent = m;
+  valEfc.textContent = efc;
+  valEf.textContent = ef;
+
+  const recall = estimateRecall(ef, m, efc);
+  const qps = estimateQps(ef, m);
+
+  outRecall.textContent = recall.toFixed(1) + '%';
+  outQps.textContent = qps.toLocaleString();
+  outMem.textContent = memMultiplier(m);
+}
+
+sliderM.addEventListener('input', updateWidget);
+sliderEfc.addEventListener('input', updateWidget);
+sliderEf.addEventListener('input', updateWidget);
+updateWidget();
+
+// Sidebar active link on scroll
+const sections = document.querySelectorAll('[id]');
+const links = document.querySelectorAll('.sidebar a[href^="#"]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

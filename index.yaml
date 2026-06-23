@@ -1,0 +1,9 @@
+subjects:
+  - id: ai-retrieval
+    name: AI Retrieval
+    folder: ai-retrieval/
+    map: ai-retrieval/map.yaml
+    progress: ai-retrieval/progress.yaml
+    cards: ai-retrieval/cards.yaml
+    deep_dives: ai-retrieval/deep-dives/index.yaml
+    description: "Embeddings, chunking, vector search, RAG, GraphRAG, and retrieval evaluation."

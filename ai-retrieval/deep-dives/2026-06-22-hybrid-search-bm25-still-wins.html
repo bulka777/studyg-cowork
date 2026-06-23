@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: Why BM25 Still Wins on the Queries That Matter</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --text: #e2e8f0;
+    --muted: #8892b0;
+    --accent: #64ffda;
+    --accent2: #a78bfa;
+    --warn: #fbbf24;
+    --info: #60a5fa;
+    --danger: #f87171;
+    --success: #34d399;
+    --card-bg: #1e2235;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 17px;
+  }
+  a { color: var(--info); }
+
+  /* ── Layout ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .header-meta { flex: 1; min-width: 260px; }
+  .header h1 { font-size: 1.5rem; color: var(--accent); margin-bottom: .4rem; }
+  .header .byline { font-size: .85rem; color: var(--muted); font-family: monospace; }
+  .badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .7rem; }
+  .badge {
+    font-size: .75rem; padding: .2rem .6rem; border-radius: 999px;
+    font-family: monospace; border: 1px solid;
+  }
+  .badge-frontier { border-color: var(--accent); color: var(--accent); background: rgba(100,255,218,.08); }
+  .badge-shaky { border-color: var(--warn); color: var(--warn); background: rgba(251,191,36,.08); }
+  .badge-new { border-color: var(--accent2); color: var(--accent2); background: rgba(167,139,250,.08); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 2rem; }
+  .tab {
+    padding: .75rem 1.25rem; font-family: monospace; font-size: .9rem;
+    cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted);
+    transition: all .15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Article pane ── */
+  .article-wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 2rem; }
+  .article-source {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.25rem; margin-bottom: 2rem; font-size: .85rem; font-family: monospace;
+  }
+  .article-source strong { color: var(--accent); }
+  .article-wrap h2 { color: var(--accent2); font-size: 1.2rem; margin: 2rem 0 .75rem; }
+  .article-wrap h3 { color: var(--info); font-size: 1rem; margin: 1.75rem 0 .5rem; }
+  .article-wrap p { margin-bottom: 1rem; color: var(--text); }
+  .article-wrap ul, .article-wrap ol { margin: .75rem 0 1rem 1.5rem; }
+  .article-wrap li { margin-bottom: .4rem; }
+
+  /* annotation callout */
+  .annotation {
+    background: rgba(100,255,218,.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: .65rem 1rem;
+    margin: 1rem 0;
+    font-size: .88rem;
+    font-family: 'Georgia', serif;
+    color: #a8d8cb;
+  }
+  .annotation strong { color: var(--accent); }
+
+  /* ── Learning pane ── */
+  .learn-wrap { max-width: 920px; margin: 0 auto; padding: 2rem 2rem; }
+  .section-head {
+    font-family: monospace; font-size: .8rem; color: var(--muted); letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border); padding-bottom: .4rem;
+  }
+  .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .info-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+  }
+  .info-card h3 { font-size: 1rem; margin-bottom: .5rem; }
+  .info-card p, .info-card li { font-size: .9rem; color: var(--muted); }
+  .info-card ul { margin-left: 1.2rem; }
+  .info-card .highlight { color: var(--text); }
+
+  .timeline { position: relative; padding-left: 2rem; margin-bottom: 2rem; }
+  .timeline::before {
+    content: ''; position: absolute; left: .5rem; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .tl-item { position: relative; margin-bottom: 1.2rem; }
+  .tl-dot {
+    position: absolute; left: -1.6rem; top: .3rem;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent2); border: 2px solid var(--bg);
+  }
+  .tl-year { font-family: monospace; font-size: .8rem; color: var(--accent2); }
+  .tl-text { font-size: .9rem; color: var(--text); }
+
+  .mechanism {
+    background: var(--surface2); border-radius: 10px; border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem; margin-bottom: 2rem;
+  }
+  .mechanism h3 { color: var(--warn); font-size: 1rem; margin-bottom: .75rem; }
+  .mech-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;
+  }
+  @media (max-width: 600px) { .mech-row { grid-template-columns: 1fr; } }
+  .mech-col {
+    background: var(--card-bg); border-radius: 8px; padding: .9rem 1rem;
+    border: 1px solid var(--border);
+  }
+  .mech-col h4 { font-size: .9rem; margin-bottom: .4rem; }
+  .mech-col p { font-size: .85rem; color: var(--muted); }
+  .mech-col code {
+    font-family: monospace; background: rgba(255,255,255,.07); padding: .1rem .3rem;
+    border-radius: 3px; font-size: .82rem;
+  }
+  .lexical-head { color: var(--warn); }
+  .semantic-head { color: var(--accent2); }
+
+  .pipeline {
+    display: flex; align-items: center; flex-wrap: wrap; gap: .5rem;
+    margin: 1rem 0 1.5rem;
+  }
+  .pipe-step {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: .5rem .9rem; font-family: monospace;
+    font-size: .82rem;
+  }
+  .pipe-arrow { color: var(--muted); font-size: 1.1rem; }
+  .pipe-step.hl { border-color: var(--accent); color: var(--accent); }
+
+  .misconception-box {
+    background: rgba(248,113,113,.08); border: 1px solid var(--danger);
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  }
+  .misconception-box h4 { color: var(--danger); font-size: .9rem; margin-bottom: .4rem; }
+  .misconception-box p { font-size: .9rem; color: var(--text); }
+
+  .fix-box {
+    background: rgba(52,211,153,.08); border: 1px solid var(--success);
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+  }
+  .fix-box h4 { color: var(--success); font-size: .9rem; margin-bottom: .4rem; }
+  .fix-box p { font-size: .9rem; color: var(--text); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .75rem; margin: 1rem 0 1.5rem; }
+  .stat-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: .75rem 1rem; text-align: center;
+  }
+  .stat-num { font-size: 1.6rem; font-weight: bold; font-family: monospace; color: var(--accent); }
+  .stat-label { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+
+  /* ── Recall cards pane ── */
+  .recall-wrap { max-width: 700px; margin: 0 auto; padding: 2rem; }
+  .recall-intro { font-size: .95rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .rc-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 1.25rem; overflow: hidden;
+  }
+  .rc-front {
+    padding: 1rem 1.25rem; font-size: .95rem; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .rc-front:hover { background: rgba(255,255,255,.03); }
+  .rc-toggle { font-family: monospace; color: var(--muted); font-size: .8rem; }
+  .rc-back {
+    display: none; padding: 1rem 1.25rem; border-top: 1px solid var(--border);
+    background: rgba(100,255,218,.04); font-size: .9rem; color: var(--text);
+  }
+  .rc-back.open { display: block; }
+  .rc-concept { font-family: monospace; font-size: .78rem; color: var(--accent2); margin-bottom: .4rem; }
+  .seam {
+    display: inline-block; font-size: .72rem; padding: .1rem .4rem; border-radius: 3px;
+    font-family: monospace; background: rgba(251,191,36,.12); color: var(--warn);
+    border: 1px solid rgba(251,191,36,.3); margin-right: .3rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="header-meta">
+    <h1>Why BM25 Still Wins on the Queries That Matter</h1>
+    <div class="byline">Deep Dive · AI Retrieval · Generated 2026-06-22</div>
+    <div class="badges">
+      <span class="badge badge-shaky">⚠ lexical-search (shaky)</span>
+      <span class="badge badge-new">★ embeddings (frontier)</span>
+      <span class="badge badge-frontier">→ hybrid-retrieval</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── TABS ── -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('article')">📄 Original Article</div>
+  <div class="tab" onclick="switchTab('learn')">🧠 Contextualised Learning</div>
+  <div class="tab" onclick="switchTab('recall')">🃏 Recall Cards</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 1 — ORIGINAL ARTICLE
+════════════════════════════════════════════ -->
+<div id="tab-article" class="tab-content active">
+<div class="article-wrap">
+
+  <div class="article-source">
+    <strong>Source:</strong> "Hybrid Search in Production: Why BM25 Still Wins on the Queries That Matter"<br>
+    <strong>Author:</strong> Tian Pan (Engineer-founder, ex-Uber/Brex) · <strong>Published:</strong> April 12, 2026<br>
+    <strong>URL:</strong> <a href="https://tianpan.co/blog/2026-04-12-hybrid-search-production-bm25-dense-embeddings" target="_blank">tianpan.co/blog/2026-04-12-hybrid-search-production-bm25-dense-embeddings</a><br>
+    <em>Full text reproduced for study; all rights belong to the original author.</em>
+  </div>
+
+  <p>BM25 was published in 1994. The math is simple enough to fit on a whiteboard. Yet in production retrieval benchmarks in 2025, it still outperforms multi-billion-parameter dense embedding models on a meaningful slice of real-world queries. Teams that discover this after deploying pure vector search tend to discover it the worst possible way: through hallucination complaints they can't reproduce in evaluation, because their eval set was built from queries that already worked.</p>
+
+  <p>This is the retrieval equivalent of sampling bias. Dense retrieval fails on a specific and predictable query shape. The failure is silent — the LLM still produces fluent, confident-sounding answers from whatever fragments it retrieved. No error log fires. No latency spike. Just quietly wrong answers for users querying product SKUs, error codes, API names, or anything that is lexically specific rather than semantically general.</p>
+
+  <p>The fix is hybrid search. But "hybrid search" is underspecified as an engineering decision. This post covers what the failure modes actually look like, how to fuse retrieval signals correctly, where the reranking layer goes, and — most critically — how to find the query types your current pipeline is silently failing on before users find them for you.</p>
+
+  <h2>The Queries Dense Retrieval Gets Wrong</h2>
+
+  <p>Dense embedding models encode a passage into a single fixed-size vector by pooling over all token representations. This pooling is what enables semantic generalization — "vacation" and "time off" end up geometrically close — but it also destroys lexical identity for specific strings.</p>
+
+  <p>When a user queries <code>ERR_SSL_VERSION_OR_CIPHER_MISMATCH</code>, that exact token sequence gets averaged with every other token in the context window. The resulting vector captures something like "document about SSL errors" rather than "document containing this specific error string." BM25, by contrast, scores against an inverted index of exact tokens. It either finds the term or it doesn't. There is no blurring.</p>
+
+  <annotation class="annotation">
+    <strong>🔗 Concept link (lexical-search):</strong> This is exactly the mechanism your progress file records as shaky — "BM25 matches exact tokens only." The article now gives you the flip side: that precision is a <em>feature</em>, not just a limitation. BM25's inability to blur is what makes it reliable for identifiers.
+  </annotation>
+
+  <p>The query types that systematically fail under pure dense retrieval follow a consistent pattern:</p>
+  <ul>
+    <li><strong>Error codes and identifiers:</strong> Exact strings like <code>0x80070005</code>, <code>INV-2024-00847</code>, or <code>ENOMEM</code> have near-zero semantic representation signal.</li>
+    <li><strong>Product SKUs and model numbers:</strong> <code>RTX-4090</code> and <code>RTX-4070</code> are semantically almost identical in embedding space — but they're different products.</li>
+    <li><strong>Function names and library identifiers:</strong> Querying for <code>torch.nn.functional.cross_entropy</code> produces an embedding close to other PyTorch docs, not reliably to documents containing that specific call signature.</li>
+    <li><strong>Rare named entities:</strong> When a query contains one rare and highly specific term alongside common words, the rare term's signal gets averaged away.</li>
+    <li><strong>Domain jargon with controlled vocabulary:</strong> Legal, medical, and technical records use specific terms-of-art where semantic blurring introduces errors.</li>
+  </ul>
+
+  <p>The 2021 BEIR benchmark made this embarrassingly clear: dense retrieval models trained on MS MARCO frequently <em>failed to outperform BM25</em> in zero-shot cross-domain evaluation.</p>
+
+  <h2>The Silent Failure Pattern</h2>
+
+  <p>The harder problem is that these failures don't announce themselves. When BM25 misses a document, the retrieval set is visibly incomplete. When a dense retriever misses a document because the query contained a rare identifier, the LLM still gets a retrieval set — just the wrong one. It generates a fluent, plausible response from whatever fragments were retrieved. This is exactly the shape of hallucination that is hardest to catch in evaluation: confident, internally consistent, and wrong about specifics.</p>
+
+  <p>The diagnostic asymmetry compounds over time. Eval sets built from production query logs contain cases where the system produced answers users accepted. The cases where the system confidently provided wrong specifics are systematically absent from the feedback signal. You end up optimizing retrieval against the queries you already handle well.</p>
+
+  <h2>Score Fusion: RRF vs. Convex Combination</h2>
+
+  <p>Hybrid retrieval produces two ranked lists — one from BM25, one from dense ANN — and needs to merge them into a single ranked result.</p>
+
+  <p><strong>Reciprocal Rank Fusion (RRF)</strong> converts each candidate document's position in each ranked list into a score: <code>1/(k + rank)</code>, where <code>k=60</code> by convention. Documents that rank high in both lists accumulate higher scores. The key advantage is that RRF is score-scale agnostic — BM25 scores and cosine similarities are on completely incompatible scales, and RRF sidesteps normalization by operating on ranks rather than scores.</p>
+
+  <p>This makes RRF a safe default. It requires no labeled data, it's robust to distribution shift, and all major vector databases ship it natively: Elasticsearch 8.x, OpenSearch 2.12+, Weaviate, Qdrant.</p>
+
+  <p><strong>Convex combination</strong> addresses the limitation of discarded score magnitude: <code>score = α × score_dense + (1-α) × score_sparse</code>. Bruch et al. (2022) showed that with as few as ~40 labeled query-relevance pairs, tuning this single <code>α</code> parameter consistently outperforms RRF.</p>
+
+  <p>In practice, <code>α</code> should vary by query domain:</p>
+  <ul>
+    <li>Technical documentation with controlled terminology: <code>α ≈ 0.3</code> (weight sparse heavily)</li>
+    <li>Conversational and policy documents: <code>α ≈ 0.7–0.8</code> (weight semantic heavily)</li>
+    <li>Balanced mixed content: <code>α ≈ 0.6</code></li>
+  </ul>
+
+  <h2>The Reranking Layer</h2>
+
+  <p>Retrieval is a high-recall problem. Reranking is a high-precision problem. They require different models.</p>
+
+  <p>The structure is two-stage:</p>
+  <ol>
+    <li><strong>First stage (retrieval):</strong> Hybrid BM25 + dense ANN with RRF fusion, fetching top-100 candidates. Fast, high-recall, operating on pre-computed indices.</li>
+    <li><strong>Second stage (reranking):</strong> A cross-encoder model scores each (query, candidate) pair jointly — the model sees both simultaneously and produces a relevance score with full attention between tokens. Applied to the top 30–50 candidates.</li>
+  </ol>
+
+  <p>Cross-encoders are dramatically more accurate than bi-encoders because they can capture phrase-level alignment and inter-token dependencies. The cost is that they cannot pre-compute document representations. This makes them impractical as first-stage retrievers at any meaningful scale, but appropriate for reranking a small candidate set.</p>
+
+  <p>The recommended production pipeline: <strong>hybrid retrieval → top-100 → MMR de-duplication → cross-encoder reranking → top-5 to top-10 for the LLM context window.</strong></p>
+
+  <h2>Diagnosing Which Query Types You're Failing On</h2>
+
+  <p><strong>Stratify by query type.</strong> Cluster your query logs: exact identifier queries, keyword-heavy queries, semantic queries, navigational queries. Compute Recall@K separately for each cluster. If keyword and identifier clusters have 40% recall while semantic clusters have 85%, you know exactly where to invest.</p>
+
+  <p><strong>Synthesize adversarial queries.</strong> Use an LLM to generate synthetic queries with exact identifiers drawn from your document corpus. Run these through your retrieval pipeline and check whether the source documents come back.</p>
+
+  <p>A production system with healthy hybrid retrieval should see Recall@10 around 85–91%, MRR above 0.80, and Hit Rate@10 above 90% for FAQ-style applications.</p>
+
+  <h2>What to Actually Build</h2>
+
+  <p>For most teams, the right starting point is RRF-based hybrid search using the native capabilities of their existing vector database. Once you have 40+ labeled query-relevance pairs for your domain, migrate from RRF to a tuned convex combination. Add cross-encoder reranking when you observe a persistent precision gap.</p>
+
+  <p>The highest-ROI diagnostic investment is building an adversarial eval set with exact-identifier queries <em>before</em> optimizing anything else. Dense embeddings are genuinely powerful for semantic retrieval. BM25 is genuinely powerful for lexical retrieval. It's now entirely about how precisely you understand where each one fails.</p>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 2 — CONTEXTUALISED LEARNING
+════════════════════════════════════════════ -->
+<div id="tab-learn" class="tab-content">
+<div class="learn-wrap">
+
+  <!-- ── Why this matters for YOU ── -->
+  <div class="section-head">Why this matters for your learning path</div>
+
+  <div class="misconception-box">
+    <h4>⚠ Your shaky concept: lexical-search</h4>
+    <p>Your progress file records this misconception: <em>"Could not identify synonym blindness as a failure mode; BM25 matches exact tokens only, missing synonyms and paraphrases."</em></p>
+    <p style="margin-top:.5rem;">This article completes the picture: yes, BM25 is blind to synonyms — but that same property is <strong>an advantage</strong> for exact identifiers, error codes, and rare named entities. The full rubric point is: <em>BM25 is strong on exact and rare terms; blind to synonyms and meaning.</em> You knew the second half. This article teaches you why the first half matters.</p>
+  </div>
+
+  <div class="fix-box">
+    <h4>✓ What this article adds (new frontier: embeddings)</h4>
+    <p>The article's entire premise is that embeddings are the complement to BM25 — powerful for semantic meaning, but they "destroy lexical identity" for specific strings. Reading this naturally introduces the <strong>embeddings</strong> concept (currently unseen on your frontier) as the answer to what BM25 can't do.</p>
+  </div>
+
+  <!-- ── Historical context ── -->
+  <div class="section-head" style="margin-top:2rem;">Historical context</div>
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1972 – SMART / TF-IDF</div>
+      <div class="tl-text">Salton's SMART system formalises term frequency × inverse document frequency as a retrieval score. Rare words that appear often in a document are more discriminative.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">1994 – BM25 (Okapi BM25)</div>
+      <div class="tl-text">Robertson et al. refine TF-IDF with saturation (a document having a term 100× doesn't score 100× better) and length normalisation. Still the standard sparse baseline 30 years later.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2013 – Word2Vec</div>
+      <div class="tl-text">Mikolov et al. show that word meaning can be embedded in continuous vectors. "King − Man + Woman ≈ Queen." This is the seed of semantic retrieval.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2018–2019 – BERT bi-encoders (Dense Passage Retrieval)</div>
+      <div class="tl-text">Pre-trained transformers let you encode whole passages into vectors. DPR (Karpukhin et al., 2020) shows dense retrieval can beat BM25 <em>on Wikipedia open-domain QA</em>. Teams over-generalise this result.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2021 – BEIR benchmark</div>
+      <div class="tl-text">Thakur et al. test dense models across 18 diverse retrieval tasks. BM25 outperforms fine-tuned dense models on several out-of-domain datasets. The "dense is always better" narrative collapses.</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-year">2022–2026 – Hybrid + reranking becomes standard</div>
+      <div class="tl-text">Production RAG systems settle on: BM25 + dense ANN → RRF fusion → cross-encoder reranking. The article you just read is a production-hardened guide to this stack.</div>
+    </div>
+  </div>
+
+  <!-- ── Mechanism ── -->
+  <div class="section-head">The mechanism beneath the thing</div>
+
+  <div class="mechanism">
+    <h3>How BM25 actually works (lexical-search rubric)</h3>
+    <div class="mech-row">
+      <div class="mech-col">
+        <h4 class="lexical-head">Step 1: Inverted index</h4>
+        <p>At index time, every document is tokenised. A dictionary maps each token → list of (document_id, position). Query token <code>"SSL"</code> → instantly retrieve all docs containing "SSL".</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="lexical-head">Step 2: BM25 score</h4>
+        <p><code>score(D,Q) = Σ IDF(qᵢ) · (f(qᵢ,D)·(k₁+1)) / (f(qᵢ,D) + k₁·(1 - b + b·|D|/avgdl))</code></p>
+        <p>Where: IDF = log((N-n+0.5)/(n+0.5)), f = term freq in doc, k₁ ≈ 1.5, b ≈ 0.75 (length penalty).</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="lexical-head">Strength: rare terms</h4>
+        <p>IDF is high for rare terms. If only 3 docs in 1M contain "ENOMEM", those 3 docs score very high for any query mentioning "ENOMEM". No blurring, no approximation.</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="lexical-head">Weakness: synonyms</h4>
+        <p>Query: "time off". Doc contains only "vacation". BM25 score = 0. There is no token overlap, so no match — even though the meaning is identical.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mechanism">
+    <h3>How dense embeddings work (embeddings rubric — frontier concept)</h3>
+    <div class="mech-row">
+      <div class="mech-col">
+        <h4 class="semantic-head">Step 1: Encoder model</h4>
+        <p>A transformer (e.g. BERT, sentence-transformers) reads the text and outputs a fixed-size vector (e.g. 768 or 1536 dimensions). The model was <em>trained</em> so that semantically similar texts produce nearby vectors.</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="semantic-head">Step 2: Vector index</h4>
+        <p>All document vectors are pre-computed and stored in a vector store (Pinecone, Weaviate, Qdrant). At query time, the query is embedded and approximate nearest neighbours are found.</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="semantic-head">Strength: synonyms</h4>
+        <p>"Vacation" and "time off" land near each other in embedding space because the training corpus showed them used in similar contexts. Cosine similarity ≈ 0.85.</p>
+      </div>
+      <div class="mech-col">
+        <h4 class="semantic-head">Weakness: lexical identity</h4>
+        <p>Querying "ERR_SSL_VERSION_OR_CIPHER_MISMATCH" produces a vector close to "SSL handshake documents" — not reliably the one doc containing that <em>exact</em> error string.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Pipeline ── -->
+  <div class="section-head">The production hybrid pipeline</div>
+  <div class="pipeline">
+    <div class="pipe-step">User query</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step hl">BM25 (exact)</div>
+    <div class="pipe-arrow">+</div>
+    <div class="pipe-step hl">Dense ANN (semantic)</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">RRF fusion<br><small>top-100</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">MMR de-dup</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">Cross-encoder<br><small>rerank top-50</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step hl">Top 5–10<br>→ LLM</div>
+  </div>
+
+  <!-- ── Benchmark numbers ── -->
+  <div class="section-head">What the benchmarks show</div>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num">+39%</div>
+      <div class="stat-label">Recall@5 vs dense-only<br>(hybrid + reranker)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">+17.4%</div>
+      <div class="stat-label">Recall@5 vs hybrid alone<br>(adding reranker)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">+7.5%</div>
+      <div class="stat-label">NDCG over BM25 baseline<br>(tuned hybrid, WANDS dataset)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">85–91%</div>
+      <div class="stat-label">Target Recall@10<br>healthy production system</div>
+    </div>
+  </div>
+
+  <!-- ── Concept map connections ── -->
+  <div class="section-head">Where this sits in your concept map</div>
+  <div class="card-row">
+    <div class="info-card">
+      <h3 style="color:var(--warn)">⚠ lexical-search (shaky → fix)</h3>
+      <p>The article completes your rubric:</p>
+      <ul style="margin-top:.4rem;">
+        <li class="highlight">Matches docs via inverted index ✓</li>
+        <li class="highlight">Ranks by TF-IDF/BM25 (rare, frequent terms weigh more) ✓</li>
+        <li class="highlight"><strong>Strong on exact & rare terms</strong> — now you know <em>why</em></li>
+        <li class="highlight">Blind to synonyms & meaning ✓ (you had this)</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3 style="color:var(--accent2)">★ embeddings (frontier → introduced)</h3>
+      <p>The article motivates embeddings by showing where BM25 fails. Core facts introduced:</p>
+      <ul style="margin-top:.4rem;">
+        <li class="highlight">Maps text → fixed-length vector</li>
+        <li class="highlight">Closeness ≈ semantic similarity</li>
+        <li class="highlight">Comes from a learned model (transformer)</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3 style="color:var(--muted)">→ hybrid-retrieval (tier 5, future)</h3>
+      <p>This article is essentially a deep preview of the <em>hybrid-retrieval</em> concept. You'll formally unlock it after: embeddings → vector-similarity → vector-store → basic-rag → hybrid-retrieval.</p>
+    </div>
+  </div>
+
+  <!-- ── Seam: sourced vs illustrated ── -->
+  <div class="section-head" style="margin-top:1.5rem;">Sourced truth vs. generated illustration</div>
+  <div class="info-card" style="margin-bottom:1.5rem;">
+    <p style="font-size:.88rem; color: var(--text);">
+      <span class="seam">sourced</span> BM25 formula, BEIR benchmark result, RRF formula, Bruch et al. α-tuning result — all cited from the original article (TianPan, April 2026) and referenced primary papers.<br><br>
+      <span class="seam">illustrated</span> The "vacation vs time off" example, the pipeline diagram, and the concept map connections above are simplified models generated to aid understanding. They are consistent with the sourced claims but are not themselves from the article.
+    </p>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 3 — RECALL CARDS
+════════════════════════════════════════════ -->
+<div id="tab-recall" class="tab-content">
+<div class="recall-wrap">
+  <p class="recall-intro">Suggested cards from this deep dive. Click any card to reveal the answer. These are candidates to mint into <code>cards/cards.yaml</code>.</p>
+
+  <div class="rc-card">
+    <div class="rc-front" onclick="toggleCard(this)">
+      <span>What is BM25's core retrieval mechanism, and what kind of query is it best suited for?</span>
+      <span class="rc-toggle">▼ show</span>
+    </div>
+    <div class="rc-back">
+      <div class="rc-concept">concept: lexical-search</div>
+      BM25 uses an <strong>inverted index</strong> to match exact tokens and scores them using TF-IDF weighting with saturation and length normalisation. It is best for <strong>exact and rare terms</strong>: error codes, identifiers, product SKUs, technical jargon — any query where the specific token string matters more than semantic meaning.
+    </div>
+  </div>
+
+  <div class="rc-card">
+    <div class="rc-front" onclick="toggleCard(this)">
+      <span>Why does BM25 fail to match "time off" to a document containing "vacation"?</span>
+      <span class="rc-toggle">▼ show</span>
+    </div>
+    <div class="rc-back">
+      <div class="rc-concept">concept: lexical-search</div>
+      BM25 operates on an inverted index of exact tokens. "Time" and "off" simply do not appear in the "vacation" document, so the BM25 score is 0. This is synonym blindness: BM25 has no notion of meaning, only token identity.
+    </div>
+  </div>
+
+  <div class="rc-card">
+    <div class="rc-front" onclick="toggleCard(this)">
+      <span>Why does a dense embedding model blur the signal for an exact error code like ERR_SSL_VERSION_OR_CIPHER_MISMATCH?</span>
+      <span class="rc-toggle">▼ show</span>
+    </div>
+    <div class="rc-back">
+      <div class="rc-concept">concept: embeddings</div>
+      Dense encoders pool over all tokens to produce one fixed-size vector. The rare, specific error string gets <strong>averaged with every other token</strong> in the context. The resulting vector captures "SSL-error document" semantically, not "this specific error string" precisely — so similar-looking but different error codes land nearby in vector space.
+    </div>
+  </div>
+
+  <div class="rc-card">
+    <div class="rc-front" onclick="toggleCard(this)">
+      <span>What is Reciprocal Rank Fusion (RRF), and why is it used to combine BM25 and dense retrieval?</span>
+      <span class="rc-toggle">▼ show</span>
+    </div>
+    <div class="rc-back">
+      <div class="rc-concept">concept: hybrid-retrieval (preview)</div>
+      RRF converts each document's rank in each list to a score: <code>1/(k + rank)</code> (k=60 by convention), then sums across lists. It is used because BM25 scores and cosine similarities are on <strong>incompatible scales</strong> — RRF sidesteps normalization by operating on ranks, not raw scores. Documents ranking high in both lists float to the top.
+    </div>
+  </div>
+
+  <div class="rc-card">
+    <div class="rc-front" onclick="toggleCard(this)">
+      <span>What is the "silent failure" problem in pure dense retrieval, and why is it hard to catch?</span>
+      <span class="rc-toggle">▼ show</span>
+    </div>
+    <div class="rc-back">
+      <div class="rc-concept">concept: retrieval-evaluation (preview)</div>
+      When dense retrieval misses a document, the LLM still receives a retrieval set and generates a <strong>fluent, confident-sounding but wrong answer</strong>. No error fires. Eval sets built from query logs only capture queries that already worked, so identifier-heavy failures are systematically absent — you optimize against queries you already handle.
+    </div>
+  </div>
+
+  <p style="margin-top:2rem; font-size:.85rem; color: var(--muted);">
+    To mint these into your system, add them to <code>cards/cards.yaml</code> with <code>source: deep-dive 2026-06-22</code>, <code>interval_days: 1</code>, and <code>due: 2026-06-23</code>.
+  </p>
+</div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const map = { article: 0, learn: 1, recall: 2 };
+  tabs[map[name]].classList.add('active');
+}
+
+function toggleCard(el) {
+  const back = el.nextElementSibling;
+  const toggle = el.querySelector('.rc-toggle');
+  if (back.classList.contains('open')) {
+    back.classList.remove('open');
+    toggle.textContent = '▼ show';
+  } else {
+    back.classList.add('open');
+    toggle.textContent = '▲ hide';
+  }
+}
+</script>
+</body>
+</html>

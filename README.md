@@ -13,10 +13,12 @@ The agent reads your concept map and progress at the start of each session and w
 ## What's here
 
 - `operating-instructions.md` — the runtime: the commands and the rules the agent follows. Start here.
-- `subjects/` — concept maps, one per subject. Seeded with **AI Retrieval** (embeddings → RAG → GraphRAG).
-- `progress/` — your mastery state per subject. Starts all `unseen`.
-- `cards/` — spaced-recall items, minted as you learn.
-- `deep-dives/` — generated interactive HTML explainers land here.
+- `index.yaml` — the root index listing all subjects and their folder locations.
+- `<subject>/` — one folder per subject, e.g. `ai-retrieval/`. Each contains:
+  - `map.yaml` — the concept map with prerequisites and rubrics.
+  - `progress.yaml` — your mastery state. Starts all `unseen`.
+  - `cards.yaml` — spaced-recall items minted as you learn.
+  - `deep-dives/` — generated interactive HTML explainers and their `index.yaml`.
 
 ## Commands
 

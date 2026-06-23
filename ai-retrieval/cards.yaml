@@ -1,0 +1,142 @@
+cards:
+  - id: card-0007
+    concept: embeddings
+    source: test-session · 2026-06-23
+    front: >
+      What is an embedding, and what does the distance between two embeddings tell you?
+    back: >
+      An embedding maps a piece of text to a fixed-length numeric vector. Distance in that
+      vector space reflects semantic similarity — vectors that are close together represent
+      text with related meaning, even if they share no keywords.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0008
+    concept: embeddings
+    source: test-session · 2026-06-23
+    front: >
+      What is the fundamental difference between hand-designed features and learned embeddings?
+    back: >
+      Hand-designed features enumerate specific characteristics explicitly (e.g. "does this
+      contain a question mark?"). Learned embeddings produce a dynamic feature space entirely
+      from training data — no human decides what the dimensions mean. The model discovers
+      which distinctions matter by exposure to a large corpus.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0009
+    concept: embeddings
+    source: test-session · 2026-06-23
+    front: >
+      What is a contextualized embedding, and how does it differ from a static embedding
+      like Word2Vec?
+    back: >
+      In static embeddings (Word2Vec), each word has one fixed vector regardless of context —
+      "bank" always maps to the same point. In contextualized embeddings (BERT and later
+      transformers), the attention mechanism allows the same word to receive a different vector
+      depending on surrounding tokens, so "bank" in a financial sentence and "bank" beside a
+      river produce distinct representations.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0010
+    concept: embeddings
+    source: test-session · 2026-06-23
+    front: >
+      In a RAG system, does each word get its own embedding or does the whole passage?
+      Why does this matter?
+    back: >
+      The whole passage gets a single fixed-length vector (passage-level embedding). This is
+      what gets stored in the vector index and retrieved at query time. Word-level embeddings
+      (like Word2Vec) are an earlier technique — useful for understanding the history, but
+      RAG retrieval operates on passage vectors, not individual word vectors.
+    interval_days: 1
+    due: 2026-06-24
+  - id: card-0001
+    concept: lexical-search
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      Why does BM25 reliably retrieve a document containing the exact string
+      `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`, while a dense embedding retriever often fails?
+    back: >
+      BM25 operates on an inverted index of exact tokens — it either finds the term or it
+      doesn't, with no blurring. Dense models pool all tokens into a single vector, averaging
+      away the identity of rare, specific strings. BM25's inability to generalise is precisely
+      what makes it reliable for exact identifiers, error codes, and SKUs.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0002
+    concept: lexical-search
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      Why is dense retrieval's failure on exact-identifier queries harder to detect than
+      BM25's failure on synonym queries?
+    back: >
+      BM25 failures are visible — the retrieval set is obviously incomplete. Dense retrieval
+      failures are silent — the LLM still receives a retrieval set (just the wrong one) and
+      generates fluent, plausible-sounding but factually wrong answers. No error log fires;
+      the hallucination looks like a normal response. Eval sets built from accepted answers
+      systematically miss these cases.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0003
+    concept: hybrid-retrieval
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      What is Reciprocal Rank Fusion (RRF), and why is it the safe default for hybrid
+      retrieval score fusion?
+    back: >
+      RRF scores each document as 1/(k + rank) in each ranked list, summing across
+      retrievers (k=60 by convention). It is score-scale agnostic — BM25 scores and cosine
+      similarities are on incompatible scales, but RRF only uses rank positions, sidestepping
+      normalisation entirely. Requires no labelled data and ships natively in Elasticsearch,
+      Weaviate, and Qdrant.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0004
+    concept: hybrid-retrieval
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      When should you upgrade from RRF to a convex combination in hybrid retrieval,
+      and what does the formula look like?
+    back: >
+      With ~40 labelled query-relevance pairs, tuning a single α parameter consistently
+      outperforms RRF. Formula: score = α × score_dense + (1-α) × score_sparse.
+      α by domain: ~0.3 for technical/controlled-vocabulary content (weight BM25 heavily),
+      ~0.7–0.8 for conversational/semantic content, ~0.6 for balanced mixed corpora.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0005
+    concept: hybrid-retrieval
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      Describe the recommended two-stage production retrieval pipeline and why it is
+      structured that way.
+    back: >
+      Stage 1 (retrieval): hybrid BM25 + dense ANN with RRF, fetching top-100 candidates —
+      fast, high-recall, uses pre-computed indices. Stage 2 (reranking): cross-encoder scores
+      each (query, candidate) pair jointly with full attention — more accurate but can't
+      pre-compute representations, so only applied to top 30–50 candidates. Final output:
+      top-5 to top-10 for the LLM context window. Also includes MMR de-duplication between
+      the two stages.
+    interval_days: 1
+    due: 2026-06-24
+
+  - id: card-0006
+    concept: hybrid-retrieval
+    source: deep-dive · hybrid-search-bm25-still-wins · 2026-06-23
+    front: >
+      Why can't a cross-encoder be used as a first-stage retriever, despite being more
+      accurate than a bi-encoder?
+    back: >
+      Cross-encoders score a (query, document) pair jointly — the model sees both
+      simultaneously, enabling full inter-token attention for high precision. But document
+      representations can't be pre-computed; every query requires scoring all candidate
+      documents at inference time, which is impractical at scale. Bi-encoders embed query
+      and document separately (pre-computable), trading some accuracy for scalability.
+    interval_days: 1
+    due: 2026-06-24

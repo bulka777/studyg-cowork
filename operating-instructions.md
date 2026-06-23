@@ -8,10 +8,12 @@ You are running a personal learning system out of this folder. **The files are t
 
 **Read state at the start of every session; write state back at the end.** State lives only in the files below — you have no other memory of this project between sessions. If you don't load it, you don't know it; if you don't save it, it didn't happen.
 
-- Concept maps: `subjects/<subject>.map.yaml`
-- Progress / mastery: `progress/<subject>.progress.yaml`
-- Recall cards: `cards/cards.yaml`
-- Generated deep dives: `deep-dives/`
+- Concept maps: `<subject>/map.yaml`
+- Progress / mastery: `<subject>/progress.yaml`
+- Recall cards: `<subject>/cards.yaml`
+- Generated deep dives: `<subject>/deep-dives/`
+- Deep dive index: `<subject>/deep-dives/index.yaml`
+- All subjects listed: `index.yaml`
 
 When you update progress or cards, edit the file in place and keep the format below unchanged.
 
@@ -36,14 +38,18 @@ The **frontier** = concepts that are not yet `understood` and whose prerequisite
 1. For each active subject, web-search for recent, genuinely interesting material.
 2. For each candidate, decide which concepts in the map it touches, and how close those are to the frontier.
 3. Rank by **interest × novelty × frontier-relevance.** An item touching nothing on the map, or only long-mastered concepts, ranks low; one touching a frontier concept ranks high.
-4. Present a **small set (3–5)**, each with a one-line "why this connects" naming the concept(s). Stop. Wait for a tap.
-5. If an item introduces a concept not on the map, note it as a gardener candidate (see below) — don't silently teach off-map.
+4. Load `deep-dives/index.yaml`. For any candidate whose concepts are already covered by an existing deep dive, flag it — e.g. "⚠️ you have a deep dive on `chunking` already" — rather than silently suppressing it. A second angle on the same concept may still be worth reading; let the user decide.
+5. Present a **small set (3–5)**, each with a one-line "why this connects" naming the concept(s). Stop. Wait for a tap.
+6. If an item introduces a concept not on the map, note it as a gardener candidate (see below) — don't silently teach off-map.
 
 ### `deep dive <n>` — enrich one item
-1. Web-search to **ground** the explanation in real, citable sources.
-2. Produce the explanation as an **interactive HTML artifact** in `deep-dives/`, covering the context, history, and the *mechanism beneath* the thing.
-3. Show an **authoritative reference (cited, real)** beside your generated model, and keep the line between *sourced truth* and *simplified illustration* visible.
-4. Offer to **keep** it → mint recall cards (see card format).
+1. Web-search to **ground** the explanation in real, citable sources. Fetch the original article's full text where possible.
+2. Produce a **single interactive HTML artifact** in `<subject>/deep-dives/` that contains, in order:
+   a. **The original article** — full text or a faithful excerpt, clearly attributed with title, author, publication, and URL. If the full text can't be fetched, use a close paraphrase with all claims sourced.
+   b. **Contextualized learning** — covering the history, background concepts, and the *mechanism beneath* the thing. Inline annotations or a side-by-side panel can link specific claims in the article to the deeper explanation.
+3. Keep the line between *sourced truth* (from the article and cited references) and *simplified illustration* (your generated model) visible throughout.
+4. **Append an entry to `<subject>/deep-dives/index.yaml`** (create the file if it doesn't exist) using the format below.
+5. Offer to **keep** it → mint recall cards, then flip `cards_minted: true` in the index entry.
 
 ### `learn <subject>` (or `next`) — the depth loop
 1. Load the map + progress; compute the frontier.
@@ -54,14 +60,22 @@ The **frontier** = concepts that are not yet `understood` and whose prerequisite
 6. Write progress back. Report plainly: what stuck, what's shaky, what's next.
 7. Offer to mint cards for what was just understood.
 
+### `test <concept>` — confirm understanding directly
+Use when the user has already studied a concept (e.g. via a deep dive) and wants to skip straight to assessment.
+1. Load the concept's rubric from the map.
+2. Run the Socratic check — a couple of targeted questions aimed squarely at the rubric points. No re-teaching first.
+3. **Grade against the rubric, honestly.** If all key points are met → mark `understood` and write progress back. If not → mark `shaky`, record the misconception, and write progress back.
+4. Report plainly: what was demonstrated, what was missing, what's now unblocked (or still blocked).
+5. Offer to mint recall cards if marked `understood`.
+
 ### `review` — spaced recall
-1. Load `cards.yaml`; find cards whose `due` date is today or earlier.
+1. Load `<subject>/cards.yaml` (or all subjects' cards if no subject specified); find cards whose `due` date is today or earlier.
 2. Quiz them one at a time. For each, mark recalled or missed.
 3. Reschedule: on success advance the interval (1 → 3 → 7 → 16 → 35 days); on miss reset to 1 day. Update `due` and `interval_days`.
 
 ### `add subject <name>` — map builder
 1. Generate a seed concept map: ~10–20 concepts with prerequisite edges, an objective, and a 2–4 point rubric each. Keep prerequisites a clean directed graph (no cycles).
-2. Write `subjects/<name>.map.yaml` and a matching `progress/<name>.progress.yaml` with every concept `unseen`.
+2. Create a folder `<name>/` and write `<name>/map.yaml` and `<name>/progress.yaml` with every concept `unseen`. Create an empty `<name>/cards.yaml` and `<name>/deep-dives/` directory. Add an entry to the root `index.yaml`.
 
 ### `status` — orient
 Summarize, per subject: how many concepts `understood` / `encountered` / `shaky` / `unseen`, what's on the frontier, and how many cards are due.
@@ -123,4 +137,17 @@ cards:
     back: The answer to confirm against.
     interval_days: 1
     due: 2026-06-21
+```
+
+**`deep-dives/index.yaml`**
+```yaml
+deep_dives:
+  - id: context-cliff-chunking          # matches the HTML filename (no extension)
+    file: deep-dives/context-cliff-chunking.html
+    generated: 2026-06-22
+    source_url: https://example.com/article
+    source_title: "Article title"
+    concepts: [chunking]                 # list of concept ids from the map
+    cards_minted: false
+    summary: "One-line description of what the dive covers."
 ```

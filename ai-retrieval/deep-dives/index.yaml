@@ -1,0 +1,36 @@
+deep_dives:
+  - id: embeddings
+    file: deep-dives/embeddings.html
+    generated: 2026-06-20
+    source_url: null
+    source_title: null
+    concepts: [embeddings]
+    cards_minted: true
+    summary: "How machines represent meaning as geometry; vectors, cosine similarity, Word2Vec, learned embeddings."
+
+  - id: hybrid-search-bm25-still-wins
+    file: deep-dives/2026-06-22-hybrid-search-bm25-still-wins.html
+    generated: 2026-06-22
+    source_url: https://tianpan.co/blog/2026-04-12-hybrid-search-production-bm25-dense-embeddings
+    source_title: "Hybrid Search in Production: Why BM25 Still Wins on the Queries That Matter"
+    concepts: [lexical-search, hybrid-retrieval]
+    cards_minted: true
+    summary: "Dense retrieval fails silently on exact-match queries; BM25 + dense ANN with RRF fusion; reranking pipeline."
+
+  - id: context-cliff-chunking
+    file: deep-dives/context-cliff-chunking.html
+    generated: 2026-06-22
+    source_url: https://www.digitalapplied.com/blog/rag-chunking-strategies-2026-retrieval-quality-playbook
+    source_title: "RAG Chunking Strategies: A 2026 Retrieval Playbook"
+    concepts: [chunking]
+    cards_minted: false
+    summary: "Context cliff at ~2,500 tokens; overlap myth debunked; 8 chunking strategies compared with benchmarks."
+
+  - id: hnsw-vector-similarity
+    file: deep-dives/hnsw-vector-similarity.html
+    generated: 2026-06-23
+    source_url: https://www.shaped.ai/blog/hnsw-explained-the-algorithm-powering-fast-vector-search
+    source_title: "HNSW Explained: The Algorithm Powering Fast Vector Search"
+    concepts: [vector-similarity]
+    cards_minted: false
+    summary: "HNSW multi-layer graph structure; M/ef_construction/ef parameters; recall-speed trade-offs; where ANN breaks down; how HNSW fits the retrieval pipeline."

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: The Context Cliff — RAG Chunking</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #21263a;
+    --border: #2d3348;
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --accent: #6366f1;
+    --accent-soft: rgba(99,102,241,0.12);
+    --source-bg: #0d1f12;
+    --source-border: #1e4620;
+    --source-label: #4ade80;
+    --model-bg: #1a1226;
+    --model-border: #3b1f5e;
+    --model-label: #a78bfa;
+    --warn-bg: #1a1506;
+    --warn-border: #4a3a00;
+    --warn-label: #fbbf24;
+    --radius: 8px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ── */
+  .site-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .site-header .badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(99,102,241,.3);
+  }
+  .site-header h1 { font-size: 15px; font-weight: 600; flex: 1; }
+  .site-header .concept-tag {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Nav tabs ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Panels ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Content containers ── */
+  .content {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .content-wide {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Typography ── */
+  h2 { font-size: 26px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+  h3 { font-size: 19px; font-weight: 600; margin: 32px 0 10px; }
+  h4 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+  p { margin-bottom: 16px; color: #cbd5e1; }
+  strong { color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Article meta ── */
+  .article-meta {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  .article-meta .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
+  .article-meta .value { font-size: 14px; }
+  .article-meta .source-pill {
+    background: var(--source-bg);
+    border: 1px solid var(--source-border);
+    color: var(--source-label);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  /* ── Key number cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .stat-card .number { font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .stat-card .label { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .stat-card .source { font-size: 11px; color: var(--text-muted); margin-top: 8px; opacity: .6; }
+
+  /* ── Sourced / model blocks ── */
+  .sourced {
+    background: var(--source-bg);
+    border: 1px solid var(--source-border);
+    border-left: 3px solid var(--source-label);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 20px 0;
+    position: relative;
+  }
+  .sourced::before {
+    content: '📄 SOURCED';
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--source-label);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .sourced .attribution { font-size: 12px; color: var(--source-label); opacity: .7; margin-top: 8px; }
+
+  .model {
+    background: var(--model-bg);
+    border: 1px solid var(--model-border);
+    border-left: 3px solid var(--model-label);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .model::before {
+    content: '💡 GENERATED ILLUSTRATION';
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--model-label);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .warn {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-left: 3px solid var(--warn-label);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .warn::before {
+    content: '⚠️ CAVEAT';
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--warn-label);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* ── Blockquote ── */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 12px 20px;
+    margin: 20px 0;
+    background: var(--accent-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+    color: #c7d2fe;
+  }
+  blockquote cite { font-style: normal; font-size: 13px; color: var(--text-muted); display: block; margin-top: 8px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Concept map connection ── */
+  .map-connection {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .map-connection .title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 10px; }
+  .concept-chain { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .concept-node {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .concept-node.frontier { border-color: var(--accent); color: var(--accent); }
+  .concept-node.unseen { color: var(--text-muted); }
+  .concept-node.shaky { border-color: var(--warn-label); color: var(--warn-label); }
+  .arrow { color: var(--text-muted); font-size: 18px; }
+
+  /* ── Section divider ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 24px;
+  }
+  .section-divider .label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .section-divider .line { flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Article section headers ── */
+  .article-section { margin: 36px 0 16px; }
+  .article-section .section-num { font-size: 12px; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+
+  /* ── Rubric checker ── */
+  .rubric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+  .rubric .title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 14px; }
+  .rubric-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+  .rubric-check { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all .15s; }
+  .rubric-check.checked { background: var(--source-label); border-color: var(--source-label); color: #0d1f12; }
+  .rubric-item label { font-size: 14px; cursor: pointer; }
+
+  /* ── Timeline ── */
+  .timeline { margin: 24px 0; }
+  .timeline-item { display: flex; gap: 16px; margin-bottom: 24px; }
+  .timeline-left { display: flex; flex-direction: column; align-items: center; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 6px; }
+  .timeline-line { flex: 1; width: 1px; background: var(--border); margin-top: 6px; }
+  .timeline-content { flex: 1; padding-bottom: 8px; }
+  .timeline-date { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .timeline-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .timeline-body { font-size: 14px; color: #94a3b8; }
+
+  /* ── Scrollspy progress ── */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width .1s;
+    z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<header class="site-header">
+  <span class="badge">Deep Dive</span>
+  <h1>The Context Cliff — RAG Chunking Strategies</h1>
+  <span class="concept-tag">→ chunking (frontier)</span>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="switchTab('article')">📄 Original Article</div>
+  <div class="tab" onclick="switchTab('context')">🧭 Background & History</div>
+  <div class="tab" onclick="switchTab('mechanism')">⚙️ Mechanism</div>
+  <div class="tab" onclick="switchTab('maplink')">🗺️ Map Connections</div>
+</nav>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB 1 · ORIGINAL ARTICLE                   -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel active" id="panel-article">
+<div class="content">
+
+  <div class="article-meta">
+    <div>
+      <div class="label">Source</div>
+      <div class="value"><strong>RAG Chunking Strategies: A 2026 Retrieval Playbook</strong></div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Digital Applied Team · Published May 27, 2026 · 12 min read</div>
+      <div style="margin-top:8px;"><a href="https://www.digitalapplied.com/blog/rag-chunking-strategies-2026-retrieval-quality-playbook" target="_blank">↗ Read original at digitalapplied.com</a></div>
+    </div>
+    <span class="source-pill">Sourced</span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="number">9%</div>
+      <div class="label">Recall gap, best vs worst chunking</div>
+      <div class="source">Weaviate, Sept 2025</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">67%</div>
+      <div class="label">Retrieval-failure cut with Contextual Retrieval + reranking</div>
+      <div class="source">Anthropic</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">14×</div>
+      <div class="label">Slower: semantic vs token-based chunking</div>
+      <div class="source">Chonkie benchmarks</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">~2.5k</div>
+      <div class="label">Context cliff threshold (tokens)</div>
+      <div class="source">arXiv Jan 2026</div>
+    </div>
+  </div>
+
+  <!-- Section 01 -->
+  <div class="article-section">
+    <div class="section-num">01 — WHY IT MATTERS</div>
+    <h2>When retrieval fails, the problem is usually the chunks.</h2>
+  </div>
+
+  <p>Retrieval-augmented generation only works if the retriever surfaces the right context. Before any document is embedded and stored, it has to be split into chunks, and those cut points define the smallest unit your system can ever retrieve. If a key fact is split across two chunks, or buried in a chunk dominated by unrelated text, no embedding model or reranker can fully recover it.</p>
+
+  <div class="sourced">
+    Weaviate's September 2025 chunking guide reports that the wrong chunking strategy can create a gap of up to <strong>9% in recall</strong> between the best and worst approaches on the same corpus and retriever — a large swing that costs nothing but a configuration change.
+    <div class="attribution">— Weaviate Engineering Team, Chunking Strategies for RAG, Sept 2025</div>
+  </div>
+
+  <p>There is a useful heuristic: Pinecone's June 2025 guide calls it the <em>human readability rule</em> — if a chunk makes sense to a human without its surrounding context, it will usually make sense to the language model too. That single test catches most of the worst chunking failures: fragments that start mid-sentence, tables sliced in half, or list items severed from the heading that gives them meaning.</p>
+
+  <!-- Section 02 -->
+  <div class="article-section">
+    <div class="section-num">02 — THE FIELD</div>
+    <h2>Eight strategies, from fixed-size to agentic.</h2>
+  </div>
+
+  <p>Chunking strategies sit on a spectrum from cheap and naive to expensive and context-aware. The cheapest split blindly on token or character counts; the most expensive ask a language model to decide where each cut should fall.</p>
+
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Strategy</th><th>Complexity</th><th>Typical size</th><th>Speed</th><th>Best for</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Recursive (LangChain)</strong></td><td>Low</td><td>256–1024 tok</td><td>Fastest</td><td>General default; mixed prose</td></tr>
+      <tr><td><strong>Fixed-size</strong></td><td>Low</td><td>256–512 tok</td><td>Fastest</td><td>Uniform, structureless text</td></tr>
+      <tr><td><strong>Sentence-based</strong></td><td>Low</td><td>1–5 sentences</td><td>Fast</td><td>Q&amp;A; matches semantic to ~5k tok</td></tr>
+      <tr><td><strong>Semantic</strong></td><td>Medium</td><td>Variable</td><td>~14× slower</td><td>Topic-shifting documents</td></tr>
+      <tr><td><strong>Hierarchical</strong></td><td>Medium</td><td>[2048,512,128]</td><td>Moderate</td><td>Long structured docs</td></tr>
+      <tr><td><strong>Late chunking</strong></td><td>Medium</td><td>Post-embedding</td><td>Moderate</td><td>Long docs with cross-references</td></tr>
+      <tr><td><strong>Contextual Retrieval</strong></td><td>High</td><td>Chunk + 50–100 tok</td><td>Slow (preproc)</td><td>High-value retrieval accuracy</td></tr>
+      <tr><td><strong>Agentic / LLM-based</strong></td><td>High</td><td>LLM-decided</td><td>Slowest</td><td>High-value one-time corpora</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="warn">
+    <strong>The characters-vs-tokens gotcha:</strong> LangChain's <code>RecursiveCharacterTextSplitter</code> counts <em>characters</em> by default, not tokens. A <code>chunk_size=512</code> setting means 512 characters — roughly 128 tokens — not 512 tokens. Fix: use <code>RecursiveCharacterTextSplitter.from_tiktoken_encoder()</code>.
+    <div class="attribution">— Digital Applied Team, May 2026</div>
+  </div>
+
+  <!-- Section 03 — The Overlap Myth -->
+  <div class="article-section">
+    <div class="section-num">04 — THE OVERLAP MYTH</div>
+    <h2>The default nobody re-tests.</h2>
+  </div>
+
+  <p>Almost every chunking guide recommends a 10–20% overlap between adjacent chunks as a universal default. Pinecone, for instance, suggests 512 tokens with a 50–100 token overlap. The reasoning is sound on its face — so it rarely gets re-tested.</p>
+
+  <div class="sourced">
+    A January 2026 systematic analysis on arXiv challenged that assumption directly. Using SPLADE retrieval with an 8B Mistral model on the Natural Questions dataset, authors Bennani &amp; Moslonka varied token, sentence, and semantic chunking across chunk sizes, overlap settings, and context lengths. Their finding on overlap: it <strong>provided no measurable benefit</strong> in their tested setup and only increased indexing cost.
+    <div class="attribution">— Bennani &amp; Moslonka, arXiv:2601.14123, January 2026</div>
+  </div>
+
+  <p>The honest reading is not that overlap is always harmful — it is that the evidence questions the universal overlap rule. Overlap may still earn its keep in boundary-sensitive domains like legal clauses. The right posture: treat overlap as a tunable you test, not a setting you copy from a tutorial.</p>
+
+  <!-- Section 04 — The Cliff -->
+  <div class="article-section">
+    <div class="section-num">05 — CHUNK SIZE</div>
+    <h2>The sweet spot and the context cliff.</h2>
+  </div>
+
+  <p>There is now converging evidence on a defensible range. An October 2023 LlamaIndex study on Uber's 10-K found <strong>1024 tokens produced peak faithfulness</strong> with only modest response-time cost. A February 2026 vendor benchmark ranked recursive 512-token splitting first at 69% accuracy across seven strategies.</p>
+
+  <div class="sourced">
+    The same January 2026 arXiv analysis (Bennani &amp; Moslonka) added a finding most guides lack: a <strong>context cliff at roughly 2,500 tokens</strong>, beyond which response quality degraded. BERTScore declined ~4–5% relatively at 10k tokens for sentence chunking. It also found sentence-based chunking matched semantic chunking up to ~5,000 tokens at a fraction of the cost.
+    <div class="attribution">— Bennani &amp; Moslonka, arXiv:2601.14123, January 2026</div>
+  </div>
+
+  <div class="warn">
+    The 2,500-token cliff comes from a <em>single preprint</em> using one retriever (SPLADE) and one generator (Mistral-8B) on Natural Questions. Treat it as a directional warning, not a universal constant.
+    <div class="attribution">— Digital Applied Team, May 2026</div>
+  </div>
+
+  <p>A November 2025 peer-reviewed MDPI Bioengineering study found adaptive topic-boundary chunking reached <strong>87% accuracy</strong> versus just 13% for a fixed-size baseline in clinical decision support — showing the direction generalises: when your documents have strong inherent structure, cut along that structure.</p>
+
+  <!-- Section 05 — Decision Path -->
+  <div class="article-section">
+    <div class="section-num">09 — THE DECISION PATH</div>
+    <h2>What to actually do.</h2>
+  </div>
+
+  <div class="sourced">
+    <strong>Step 1 — Default: recursive 512-token splits.</strong> Use <code>from_tiktoken_encoder()</code> for token-accurate cuts. Skip overlap as a default.<br><br>
+    <strong>Step 2 — Match size to query type.</strong> Factoid lookups: 64–256 tokens. Analytical/narrative: 512–1024+.<br><br>
+    <strong>Step 3 — Graduate to semantic/hierarchical when metrics justify it.</strong> ~14× slower; earn the complexity via RAGAS scores.<br><br>
+    <strong>Step 4 — Add Contextual Retrieval or late chunking for high-value corpora.</strong> For corpora under ~200k tokens, consider skipping RAG entirely and injecting the full document.
+    <div class="attribution">— Digital Applied Team, May 2026</div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB 2 · BACKGROUND & HISTORY              -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-context">
+<div class="content">
+
+  <h2>Background &amp; History</h2>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:32px;">Why does chunking exist at all? The story starts with a fundamental constraint.</p>
+
+  <div class="model">
+    This section is a <strong>generated illustration</strong> — a conceptual model grounding the article in the broader history of AI retrieval. It synthesises ideas from the field; it is not a direct transcript of any single source. Where specific claims are sourced, they are marked separately.
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">The core problem</div><div class="line"></div></div>
+
+  <h3>Why you can't just feed the whole document to the model</h3>
+
+  <p>Language models have a <strong>context window</strong> — a hard limit on how many tokens they can process in one call. In 2022, GPT-3 had a 4,096-token window. That's roughly 10 pages of text. A corporate knowledge base might have thousands of documents. You can't fit them all.</p>
+
+  <div class="model">
+    <strong>The retrieval-before-generation idea:</strong> Instead of shoving everything into the prompt, what if you <em>retrieved</em> just the relevant pieces first? This is the insight behind RAG. But now a new question appears: what is "a piece"? You need to decide the unit of retrieval before you can retrieve anything. That unit is the chunk.
+  </div>
+
+  <p>Chunking is therefore not an optimisation detail — it is the foundational decision in any retrieval system. The chunk is the atom. Everything else (embedding, indexing, retrieval, generation) operates on top of it.</p>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Historical evolution</div><div class="line"></div></div>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="timeline-content">
+        <div class="timeline-date">Pre-2022 · Information Retrieval era</div>
+        <div class="timeline-title">Lexical search: the document is the unit</div>
+        <div class="timeline-body">Traditional search engines (BM25, TF-IDF) indexed <em>whole documents</em>. Retrieval returned "Document 42 is relevant." Summarising or extracting specific facts required the user to read the document themselves.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="timeline-content">
+        <div class="timeline-date">2022–2023 · First-generation RAG</div>
+        <div class="timeline-title">Fixed-size chunking becomes the default</div>
+        <div class="timeline-body">As LLMs entered production, engineers needed to feed relevant text into the prompt. The simplest approach: split every document into N-token blocks, embed each block, store in a vector DB, retrieve top-k. Crude, but it worked well enough to ship.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="timeline-content">
+        <div class="timeline-date">2023 · LlamaIndex benchmarks</div>
+        <div class="timeline-title">First empirical data on chunk size</div>
+        <div class="timeline-body">LlamaIndex ran a systematic study on Uber's 10-K filing, benchmarking sizes from 128 to 2048 tokens. Finding: 1024 tokens produced peak faithfulness. Smaller lost context; larger introduced noise. This became the first evidence-based default.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="timeline-content">
+        <div class="timeline-date">2024 · Semantic chunking &amp; smarter approaches</div>
+        <div class="timeline-title">Meaning-aware splitting; Anthropic's Contextual Retrieval</div>
+        <div class="timeline-body">Semantic chunking used embedding similarity to detect topic shifts instead of cutting at fixed intervals. Anthropic introduced Contextual Retrieval: prepend a 50–100 token LLM-generated summary to each chunk before embedding — reportedly cutting top-20 retrieval failures by up to 67% with reranking. Jina introduced Late Chunking: embed the full document first, then split.</div>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="timeline-content">
+        <div class="timeline-date">Jan 2026 · arXiv:2601.14123</div>
+        <div class="timeline-title">The context cliff &amp; the overlap myth</div>
+        <div class="timeline-body">Bennani &amp; Moslonka's systematic analysis challenged two long-held assumptions: (1) overlap is always helpful — it isn't, in their setup; (2) bigger context is always better — response quality degrades past ~2,500 tokens. Both findings are from a single study and need replication, but they've already shifted practitioner defaults.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">The semantic chunking trade-off</div><div class="line"></div></div>
+
+  <h3>Why smarter isn't always better</h3>
+
+  <div class="sourced">
+    Chonkie benchmarks: semantic chunking runs at ~0.33 MB/s versus ~4.82 MB/s for token-based — roughly <strong>14× slower</strong>. For a 10 GB corpus, that's hours versus minutes.
+    <div class="attribution">— Chonkie library benchmarks, cited in Digital Applied, May 2026</div>
+  </div>
+
+  <div class="sourced">
+    The January 2026 arXiv analysis found sentence chunking matched semantic chunking on performance <strong>up to ~5,000 tokens</strong> at far lower cost.
+    <div class="attribution">— Bennani &amp; Moslonka, arXiv:2601.14123</div>
+  </div>
+
+  <div class="model">
+    <strong>The principle behind this:</strong> Semantic chunking is solving the problem of "cuts that land in the middle of a topic." But if your topics tend to be short (say, under a couple of paragraphs), sentence boundaries already capture the same information. You only need semantic detection when topic shifts happen at unpredictable intervals — dense academic papers, mixed-purpose documents, dialogue transcripts. For most structured corporate content, sentence boundaries are a cheap proxy.
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB 3 · MECHANISM                          -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-mechanism">
+<div class="content">
+
+  <h2>The Mechanism</h2>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:32px;"><em>Why</em> does a context cliff exist at 2,500 tokens? And why does overlap fail to help?</p>
+
+  <div class="model">
+    What follows is a conceptual model explaining the likely mechanisms. The empirical findings come from the arXiv paper; the explanatory model is a generated illustration.
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Mechanism 1 · The context cliff</div><div class="line"></div></div>
+
+  <h3>Why more tokens ≠ better answers</h3>
+
+  <p>When a RAG system retrieves top-k chunks and concatenates them into the context window, two competing forces are at play:</p>
+
+  <div class="model">
+    <strong>Signal vs noise trade-off:</strong><br><br>
+    Every chunk you add brings <em>some</em> probability of containing the answer (signal), but also introduces text that doesn't relate to the query (noise). As total context grows, the noise accumulates faster than the signal — because the marginal chunk is increasingly unlikely to be the one containing the answer.<br><br>
+    At small sizes, more context genuinely helps — you're filling in missing information. Past a threshold (~2,500 tokens in Bennani &amp; Moslonka's setup), the noise starts degrading the model's ability to locate the relevant portion. This is sometimes called the <em>"lost-in-the-middle" effect</em>: LLMs attend more strongly to tokens at the beginning and end of their context, and information in the middle gets underweighted.
+  </div>
+
+  <div class="sourced">
+    The January 2026 arXiv study found BERTScore declined ~4–5% relatively at 10k tokens for sentence chunking compared to optimal context length. Performance improved from small to moderate contexts, then degraded past ~2,500 tokens.
+    <div class="attribution">— Bennani &amp; Moslonka, arXiv:2601.14123</div>
+  </div>
+
+  <div class="warn">
+    The specific 2,500-token number is from one experimental setup (SPLADE retrieval + Mistral-8B + Natural Questions). The <em>shape</em> of the effect — quality rising then falling — is well-supported; the exact threshold will vary by model and domain.
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Mechanism 2 · Why overlap fails</div><div class="line"></div></div>
+
+  <h3>The intuition behind overlap — and why it breaks down</h3>
+
+  <div class="model">
+    <strong>Why overlap was supposed to work:</strong><br>
+    Imagine a sentence that spans a chunk boundary. Without overlap, the left half is in chunk A and the right half is in chunk B. If only chunk A is retrieved, the sentence is incomplete. Overlap copies the tail of chunk A into the start of chunk B, ensuring the sentence appears whole in at least one chunk.<br><br>
+    <strong>Why it often doesn't:</strong><br>
+    1. <em>Indexing cost</em> — overlap inflates the total number of tokens stored and embedded. A 20% overlap on a 1000-chunk corpus creates ~1200 chunks. More chunks = more embeddings = more storage = slower retrieval.<br><br>
+    2. <em>Duplicate retrieval</em> — two highly similar chunks (the overlapping region) can both be retrieved, consuming context window space with near-identical text and reducing effective diversity of retrieved information.<br><br>
+    3. <em>The boundary case is rare</em> — for most queries, the key information sits in the <em>interior</em> of a chunk, not at the boundary. Overlap pays a universal cost to solve an edge case.
+  </div>
+
+  <div class="sourced">
+    Bennani &amp; Moslonka's analysis found chunk overlap "provided no measurable benefit in their tested setup while raising indexing cost." This was on Natural Questions with SPLADE retrieval.
+    <div class="attribution">— arXiv:2601.14123, January 2026</div>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Mechanism 3 · Why chunking outweighs model choice</div><div class="line"></div></div>
+
+  <h3>Garbage in, garbage out — the retrieval floor</h3>
+
+  <div class="model">
+    <strong>The analogy:</strong> Think of chunking as the quality of the raw materials going into a factory. An embedding model is the factory machinery. No matter how sophisticated your machinery, you cannot manufacture a precision part from sand. If the key fact about a question is split across two chunks and neither is retrieved, the generator has no path to the correct answer — regardless of how capable it is.<br><br>
+    Conversely, a perfect retrieval set (all relevant facts, clearly bounded) lets even a modest generator produce a good answer. This is why the 9% recall gap from poor chunking choices is so consequential: it represents a ceiling on what the rest of the pipeline can achieve.
+  </div>
+
+  <div class="sourced">
+    "When a RAG system performs poorly, the issue is often not the retriever — it's the chunks."
+    <div class="attribution">— Weaviate Engineering Team, Chunking Strategies for RAG, Sept 2025</div>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">What fixes context loss at boundaries</div><div class="line"></div></div>
+
+  <h3>The smarter alternatives: Contextual Retrieval &amp; Late Chunking</h3>
+
+  <div class="sourced">
+    <strong>Anthropic's Contextual Retrieval (Sept 2024):</strong> A small model (Claude 3 Haiku) generates a 50–100 token description of each chunk's place in the document and prepends it before embedding. Contextual Embeddings alone reduced top-20 retrieval failures by ~35% (5.7% → 3.7%); with BM25, ~49% (→ 2.9%); with reranking, ~67% (→ 1.9%). Preprocessing cost: ~$1.02 per million document tokens with prompt caching.
+    <div class="attribution">— Anthropic, September 2024</div>
+  </div>
+
+  <div class="sourced">
+    <strong>Jina AI's Late Chunking (2024):</strong> Embeds all tokens of the full document first, then applies the split after the transformer. This preserves long-distance dependencies — anaphoric references like "its" or "the city" that point back to earlier sections survive the cut. BEIR benchmark gains: SciFact 64.20% → 66.10% nDCG@10; NFCorpus 23.46% → 29.98%.
+    <div class="attribution">— Michael Günther &amp; Han Xiao, Jina AI, 2024</div>
+  </div>
+
+  <div class="model">
+    <strong>The conceptual difference between the two approaches:</strong><br>
+    Contextual Retrieval solves the problem at <em>embedding time</em> — it gives each chunk richer content before it's embedded, so the embedding itself reflects context.<br>
+    Late Chunking solves it at <em>representation time</em> — it delays the split until after the model has seen the full document, so the chunk's vector already contains surrounding context.<br>
+    Both add cost (LLM preprocessing or long-context embedding model requirements). Both are worth that cost only when your RAGAS metrics confirm context-loss is your bottleneck.
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TAB 4 · MAP CONNECTIONS                    -->
+<!-- ══════════════════════════════════════════ -->
+<div class="panel" id="panel-maplink">
+<div class="content">
+
+  <h2>Map Connections</h2>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:32px;">How this article connects to your AI Retrieval concept map.</p>
+
+  <div class="map-connection">
+    <div class="title">Concept path this article sits on</div>
+    <div class="concept-chain">
+      <span class="concept-node frontier">chunking 🎯</span>
+      <span class="arrow">→</span>
+      <span class="concept-node unseen">vector-store</span>
+      <span class="arrow">→</span>
+      <span class="concept-node unseen">basic-rag</span>
+      <span class="arrow">→</span>
+      <span class="concept-node unseen">retrieval-evaluation</span>
+      <span class="arrow">→</span>
+      <span class="concept-node unseen">chunking-strategies</span>
+    </div>
+    <p style="margin-top:12px;font-size:13px;color:var(--text-muted);">This article is primarily grounding the <strong>chunking</strong> concept (frontier). It also previews <strong>retrieval-evaluation</strong> (RAGAS) and the advanced <strong>chunking-strategies</strong> concept that sits at tier 6 — after basic-rag is understood.</p>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Concept: chunking</div><div class="line"></div></div>
+
+  <h3>What this article teaches about Chunking</h3>
+
+  <div class="model">
+    The <strong>chunking</strong> concept on your map has a two-point rubric:<br><br>
+    1. Documents are split into passages before embedding.<br>
+    2. Chunk size trades off context completeness against retrieval precision.<br><br>
+    The article addresses both directly. On (1): the entire pipeline depends on splitting first. On (2): the LlamaIndex 1024-token peak, the context cliff, the 9% recall gap, and the query-type size table all illuminate the trade-off concretely.
+  </div>
+
+  <!-- Rubric self-check -->
+  <div class="rubric">
+    <div class="title">Chunking rubric — self-check</div>
+    <div class="rubric-item">
+      <div class="rubric-check" id="r1" onclick="toggleCheck('r1')"></div>
+      <label onclick="toggleCheck('r1')">Documents are split into passages before embedding — and the cut points define the smallest retrievable unit.</label>
+    </div>
+    <div class="rubric-item">
+      <div class="rubric-check" id="r2" onclick="toggleCheck('r2')"></div>
+      <label onclick="toggleCheck('r2')">Chunk size trades off context completeness against retrieval precision: too small loses surrounding context; too large introduces noise and hits the context cliff.</label>
+    </div>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Concepts previewed (not yet on frontier)</div><div class="line"></div></div>
+
+  <h3>Retrieval Evaluation</h3>
+
+  <p>The article references RAGAS repeatedly: "you cannot tune what you don't measure." RAGAS is the standard open-source evaluation framework for RAG, measuring context precision, context recall, faithfulness, and answer relevancy.</p>
+
+  <div class="model">
+    You'll encounter this properly when you reach the <strong>retrieval-evaluation</strong> concept (tier 5, after basic-rag). For now, the key intuition to carry forward: every chunking decision the article makes is justified by <em>measurement</em>, not intuition. The fact that overlap is contested, for example, was only discovered by running controlled experiments.
+  </div>
+
+  <h3>Advanced Chunking Strategies</h3>
+
+  <p>The article covers Contextual Retrieval, late chunking, semantic chunking, and hierarchical chunking. These map to the <strong>chunking-strategies</strong> concept at tier 6 on your map — the most advanced concept in the subject. Its rubric explicitly requires retrieval-evaluation as a hard prerequisite: "the right choice is justified by retrieval evaluation, not guesswork."</p>
+
+  <div class="model">
+    The forward implication: you can follow the intuition for these techniques now (from this article), but properly understanding <em>when to choose</em> among them requires understanding how to measure retrieval quality first. The map is right to gate it.
+  </div>
+
+  <h3>Hybrid Retrieval &amp; Lexical Search</h3>
+
+  <p>The article mentions BM25 in the context of Anthropic's Contextual Retrieval — "Contextual Embeddings + BM25 cut retrieval failures by 49%." BM25 is keyword-based (lexical) retrieval. Combining it with vector search is <strong>hybrid-retrieval</strong> on your map.</p>
+
+  <div class="map-connection">
+    <div class="title">Related concepts touched by this article</div>
+    <div class="concept-chain">
+      <span class="concept-node shaky">lexical-search ⚠️</span>
+      <span class="arrow">+</span>
+      <span class="concept-node unseen">vector-store</span>
+      <span class="arrow">→</span>
+      <span class="concept-node unseen">hybrid-retrieval</span>
+    </div>
+    <p style="margin-top:10px;font-size:13px;color:var(--text-muted);">The article shows BM25 and vector retrieval being combined for best results — motivating why both halves of <strong>hybrid-retrieval</strong> need to be understood independently first. Your current gap on <strong>lexical-search</strong> (synonym blindness) is directly relevant here.</p>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><div class="label">Sourcing note</div><div class="line"></div></div>
+
+  <div class="sourced">
+    <strong>Primary sources referenced in this deep dive:</strong>
+    <ul style="margin-top:8px;font-size:13px;line-height:2;">
+      <li><a href="https://www.digitalapplied.com/blog/rag-chunking-strategies-2026-retrieval-quality-playbook" target="_blank">Digital Applied — RAG Chunking Strategies Playbook (May 2026)</a></li>
+      <li><a href="https://arxiv.org/abs/2601.14123" target="_blank">Bennani &amp; Moslonka — A Systematic Analysis of Chunking Strategies (arXiv:2601.14123, Jan 2026)</a></li>
+      <li>Weaviate — Chunking Strategies for RAG Tutorial (Sept 2025)</li>
+      <li>Anthropic — Contextual Retrieval (Sept 2024)</li>
+      <li>Jina AI — Late Chunking (2024)</li>
+      <li>LlamaIndex — Chunk Size Study on Uber 10-K (Oct 2023)</li>
+    </ul>
+    <div class="attribution">All claims in ☑ SOURCED blocks above trace to these references. Claims in 💡 GENERATED ILLUSTRATION blocks are explanatory models.</div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      const names = ['article','context','mechanism','maplink'];
+      t.classList.toggle('active', names[i] === name);
+    });
+    document.querySelectorAll('.panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-' + name);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleCheck(id) {
+    document.getElementById(id).classList.toggle('checked');
+    const el = document.getElementById(id);
+    el.textContent = el.classList.contains('checked') ? '✓' : '';
+  }
+
+  // Reading progress bar
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const pct = (doc.scrollTop / (doc.scrollHeight - doc.clientHeight)) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+  });
+</script>
+
+</body>
+</html>

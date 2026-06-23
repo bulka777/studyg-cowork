@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: Embeddings</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22253a;
+    --border: #2e3150;
+    --accent: #6c8ef5;
+    --accent2: #a78bfa;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --text: #e2e4f0;
+    --muted: #7b80a0;
+    --truth-bg: #0d1f0f;
+    --truth-border: #1e4a22;
+    --truth-text: #86efac;
+    --model-bg: #0d0f1f;
+    --model-border: #1e2a5a;
+    --model-text: #93c5fd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 2.5rem; }
+  h2 { font-size: 1.2rem; font-weight: 600; color: var(--accent); margin: 2.5rem 0 0.75rem; }
+  h3 { font-size: 1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+  p { margin-bottom: 1rem; }
+  code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--surface2);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--accent2);
+  }
+
+  /* Source / model callouts */
+  .sourced {
+    background: var(--truth-bg);
+    border-left: 3px solid var(--truth-border);
+    padding: 0.75rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--truth-text);
+  }
+  .sourced .label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+    color: var(--green);
+  }
+  .model-note {
+    background: var(--model-bg);
+    border-left: 3px solid var(--model-border);
+    padding: 0.75rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--model-text);
+  }
+  .model-note .label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+    color: var(--accent);
+  }
+
+  /* Vector display */
+  .vector-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.85rem;
+  }
+  .vector-label {
+    width: 120px;
+    color: var(--muted);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .vector-bars { display: flex; gap: 3px; align-items: center; }
+  .bar {
+    height: 20px;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* Canvas section */
+  #canvas-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1.25rem 0;
+  }
+  canvas { display: block; width: 100%; border-radius: 6px; }
+  .canvas-controls {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;
+  }
+  .chip {
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Training animation */
+  #training-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+  }
+  .sentence-display {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    line-height: 2;
+  }
+  .word-span {
+    display: inline-block;
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    margin: 0 2px;
+    transition: all 0.3s;
+  }
+  .word-span.target {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .word-span.context {
+    background: var(--surface2);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+  }
+  .word-span.other { color: var(--muted); }
+  .training-caption {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    min-height: 2.5rem;
+  }
+  .btn {
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 0.75rem;
+  }
+  .btn:hover { background: var(--accent); color: #fff; }
+
+  /* Similarity meter */
+  #sim-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+  }
+  .pair-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.6rem 0;
+    cursor: pointer;
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .pair-row:hover { background: var(--surface2); }
+  .pair-row.selected { background: var(--surface2); outline: 1px solid var(--border); }
+  .pair-words { flex: 1; font-size: 0.9rem; }
+  .pair-word { font-weight: 600; }
+  .sim-bar-track {
+    width: 160px;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .sim-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .sim-value { width: 40px; text-align: right; font-size: 0.85rem; font-family: monospace; }
+
+  /* Dimension explorer */
+  #dim-explore {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+  }
+  .dim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 4px;
+    margin: 0.75rem 0;
+  }
+  .dim-cell {
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-family: monospace;
+    cursor: pointer;
+    transition: transform 0.15s;
+    position: relative;
+  }
+  .dim-cell:hover { transform: scale(1.15); z-index: 1; }
+  .dim-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .dim-cell:hover .dim-tooltip { display: block; }
+
+  /* Nav / sections */
+  .section-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-item {
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.2rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-item:hover { color: var(--accent); border-color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  .sources-section { font-size: 0.85rem; color: var(--muted); }
+  .sources-section a { color: var(--accent); text-decoration: none; }
+  .sources-section a:hover { text-decoration: underline; }
+  .sources-section li { margin: 0.3rem 0; }
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .callout-title { font-weight: 600; margin-bottom: 0.4rem; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Embeddings</h1>
+  <div class="subtitle">How machines learn to represent meaning as geometry · Deep dive · 2026-06-20</div>
+
+  <nav class="section-nav">
+    <span class="nav-item" onclick="scrollTo('#what')">What is an embedding?</span>
+    <span class="nav-item" onclick="scrollTo('#geometry')">The geometry of meaning</span>
+    <span class="nav-item" onclick="scrollTo('#training')">How they're learned</span>
+    <span class="nav-item" onclick="scrollTo('#dimensions')">What dimensions mean</span>
+    <span class="nav-item" onclick="scrollTo('#sentences')">Words → sentences</span>
+    <span class="nav-item" onclick="scrollTo('#limits')">Limitations</span>
+    <span class="nav-item" onclick="scrollTo('#sources')">Sources</span>
+  </nav>
+
+  <!-- SECTION 1: WHAT -->
+  <h2 id="what">1. What is an embedding?</h2>
+
+  <p>An embedding converts a piece of text into a fixed-length list of numbers — a <strong>vector</strong>. That's the mechanical definition. The useful definition is different: an embedding is a coordinate in a high-dimensional space where <em>proximity encodes semantic similarity</em>.</p>
+
+  <div class="model-note">
+    <div class="label">Simplified illustration</div>
+    Imagine collapsing all possible meanings of English onto a map. Words with similar meanings appear in the same neighbourhood. "Cat" and "kitten" are a block apart. "Cat" and "photosynthesis" are on opposite coasts. An embedding is just your address on that map — expressed as numbers.
+  </div>
+
+  <div class="sourced">
+    <div class="label">Sourced — IBM / Wikipedia</div>
+    Word embeddings are numerical representations of words in a high-dimensional vector space that capture semantic relationships based on usage patterns in large corpora. They represent "word complexities mathematically, which helps computers process and understand language more like humans do." — IBM Think
+  </div>
+
+  <p>Here's what the first few dimensions of three embeddings might look like (values illustrative — real vectors have 768–4096 dimensions):</p>
+
+  <div id="vector-display"></div>
+
+  <!-- SECTION 2: GEOMETRY -->
+  <h2 id="geometry">2. The geometry of meaning</h2>
+
+  <p>Because meaning is now a point in space, you can use geometry to ask questions that were previously impossible with keyword search.</p>
+
+  <div id="canvas-wrap">
+    <canvas id="space-canvas" height="360"></canvas>
+    <div class="canvas-controls" id="group-chips"></div>
+    <p style="font-size:0.8rem; color:var(--muted); margin-top:0.6rem;">
+      2D projection of a ~300-dimensional space. Real distances are higher-dimensional and richer. Click a group to highlight.
+    </p>
+  </div>
+
+  <h3>Measuring closeness: cosine similarity</h3>
+  <p>The most common measure isn't Euclidean distance (straight-line) — it's <strong>cosine similarity</strong>: the cosine of the angle between two vectors. Two vectors pointing in the same direction score 1.0 (identical); perpendicular vectors score 0; opposite directions score −1.</p>
+
+  <div class="model-note">
+    <div class="label">Why cosine, not distance?</div>
+    A 10,000-word document might have the same meaning as a 100-word summary, but its embedding magnitudes would differ. Cosine ignores magnitude and asks only: are these vectors <em>pointing</em> the same direction? That makes it robust to length and scale differences.
+  </div>
+
+  <div id="sim-demo">
+    <h3 style="margin-top:0">Similarity pairs — click to explore</h3>
+    <div id="sim-pairs"></div>
+    <div style="font-size:0.8rem; color:var(--muted); margin-top:0.75rem;" id="sim-caption"></div>
+  </div>
+
+  <div class="sourced">
+    <div class="label">Sourced — arXiv 2509.01606 (2025)</div>
+    Recent research (2025) shows the geometry of sentence embedding spaces is subtler than often assumed: "cosine similarity captures shallow commonalities or differences between sentence embeddings, which are not necessarily predictive of their performance on specific tasks." Cosine remains the standard, but semantic similarity is not perfectly captured by any single metric.
+  </div>
+
+  <!-- SECTION 3: TRAINING -->
+  <h2 id="training">3. How embeddings are learned</h2>
+
+  <p>No one hand-codes these vectors. They emerge from a prediction task on massive text. The key idea is the <strong>distributional hypothesis</strong>:</p>
+
+  <div class="sourced">
+    <div class="label">Sourced — Word2Vec / Wikipedia</div>
+    "You shall know a word by the company it keeps." (J.R. Firth, 1957) — Words that appear in the same contexts tend to have similar meanings. This is the foundation of all embedding methods.
+  </div>
+
+  <h3>Word2Vec: Skip-gram</h3>
+  <p>The classic training method. Given a target word, the model tries to predict the surrounding context words. For every (target, context) pair observed in the corpus, the model nudges those two vectors closer together. Over millions of examples, words that consistently share context end up near each other in space.</p>
+
+  <div id="training-demo">
+    <h3 style="margin-top:0">Skip-gram training — step through it</h3>
+    <div class="sentence-display" id="training-sentence"></div>
+    <div class="training-caption" id="training-caption"></div>
+    <button class="btn" id="training-btn">Next step →</button>
+  </div>
+
+  <div class="model-note">
+    <div class="label">Simplified illustration</div>
+    Think of it as arranging words on a magnetic board. Two words that keep appearing near each other in sentences slowly get pulled together. "Dog" and "leash" appear in the same sentences constantly → they drift close. "Dog" and "algorithm" rarely co-occur → they stay distant. Do this for a trillion tokens and the geometry becomes remarkably semantic.
+  </div>
+
+  <div class="sourced">
+    <div class="label">Sourced — Word2Vec Wikipedia / Baeldung</div>
+    Word2Vec trains a shallow two-layer neural network with a projection layer. The weights of the projection layer <em>are</em> the embeddings — the network is discarded after training; only the weight matrix is kept. Two architectures exist: Skip-gram (target → predict context, better for rare words) and CBOW (context → predict target, faster to train).
+  </div>
+
+  <h3>Modern sentence encoders</h3>
+  <p>Word2Vec gives one vector per word. Modern models (BERT, sentence-transformers) process the full sequence and produce a <em>context-sensitive</em> vector: "bank" in "river bank" gets a different vector than "bank" in "savings bank." The mechanism is the transformer's attention — each word can attend to all others before its vector is computed.</p>
+
+  <!-- SECTION 4: DIMENSIONS -->
+  <h2 id="dimensions">4. What the dimensions actually mean</h2>
+
+  <p>Each number in the vector corresponds to one "dimension" in the learned space. Here's the uncomfortable truth:</p>
+
+  <div class="callout">
+    <div class="callout-title">The dimensions have no human-readable labels.</div>
+    Dimension 412 doesn't mean "animal-ness." It's a learned feature that the network found useful for the prediction task. Some dimensions correlate loosely with interpretable properties (gender, tense, formality), but most are entangled combinations of many things. The geometry <em>works</em>, even if we can't read the axes.
+  </div>
+
+  <div id="dim-explore">
+    <h3 style="margin-top:0">Exploring a 64-dim embedding (toy)</h3>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0.5rem;">
+      Each cell = one dimension. Colour = value (blue = negative, warm = positive). Hover for value.
+    </p>
+    <div style="margin-bottom:0.75rem">
+      <select id="word-select" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;">
+        <option value="king">king</option>
+        <option value="queen">queen</option>
+        <option value="man">man</option>
+        <option value="woman">woman</option>
+        <option value="paris">paris</option>
+        <option value="france">france</option>
+      </select>
+    </div>
+    <div class="dim-grid" id="dim-grid"></div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;">Values are illustrative — structured to show that king−man+woman≈queen</p>
+  </div>
+
+  <div class="sourced">
+    <div class="label">Sourced — arXiv 2509.01606 (2025)</div>
+    "Linguistic information is encoded in weighted combinations of different dimensions, which are not reflected in the geometry of the sentence embedding space." The embedding dimensions are not orthogonal, interpretable features — they're learned projections that collectively encode meaning.
+  </div>
+
+  <!-- SECTION 5: SENTENCES -->
+  <h2 id="sentences">5. From words to sentences</h2>
+
+  <p>The RAG systems you're learning about don't embed individual words — they embed <em>passages</em>. Models like <code>text-embedding-3-small</code> (OpenAI) or <code>all-MiniLM-L6-v2</code> (open source) encode an entire sentence or paragraph into a single vector.</p>
+
+  <div class="sourced">
+    <div class="label">Sourced — John Snow Labs / Sentence Transformers</div>
+    Sentence transformer models produce embeddings (typically 384 to 4096 dimensions) suitable for similarity computation using cosine similarity. They are trained to make semantically similar sentences cluster together in vector space — enabling search by meaning rather than by term matching.
+  </div>
+
+  <p>The workflow in a retrieval system:</p>
+  <ol style="margin-left:1.5rem; margin-bottom:1rem;">
+    <li style="margin-bottom:0.5rem"><strong>Offline:</strong> embed every chunk of your document corpus → store vectors in a vector store</li>
+    <li style="margin-bottom:0.5rem"><strong>At query time:</strong> embed the user's question → find the chunks with the nearest vectors → return them as context</li>
+  </ol>
+  <p>This is why embeddings are the engine of semantic search — and why they're the prerequisite for understanding vector stores and RAG.</p>
+
+  <!-- SECTION 6: LIMITS -->
+  <h2 id="limits">6. Limitations (the honest part)</h2>
+
+  <div class="callout">
+    <div class="callout-title">Where embeddings struggle</div>
+    <ul style="margin-left:1.2rem; margin-top:0.5rem;">
+      <li style="margin-bottom:0.4rem"><strong>Exact-match terms:</strong> BM25 still beats embeddings on rare proper nouns, product codes, and technical IDs — "SKU-4471-B" hashes perfectly in an inverted index; an embedding may blur it.</li>
+      <li style="margin-bottom:0.4rem"><strong>Negation:</strong> "not happy" and "happy" may embed close together because both sentences share most context words.</li>
+      <li style="margin-bottom:0.4rem"><strong>Out-of-distribution:</strong> a model trained on Wikipedia will produce poor embeddings for highly specialised jargon it never saw.</li>
+      <li><strong>Cost:</strong> computing embeddings at scale requires GPUs; inverted indexes are CPU-friendly and cheap.</li>
+    </ul>
+  </div>
+
+  <p>This is why production systems combine both approaches — hybrid retrieval (a later concept in your map).</p>
+
+  <hr>
+
+  <div class="sources-section" id="sources">
+    <h2 style="color:var(--muted); font-size:1rem; margin-top:0">Sources & references</h2>
+    <ul style="margin-left:1.2rem;">
+      <li><a href="https://www.ibm.com/think/topics/word-embeddings" target="_blank">What Are Word Embeddings? — IBM Think</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Word2vec" target="_blank">Word2vec — Wikipedia</a></li>
+      <li><a href="https://www.baeldung.com/cs/word-embeddings-cbow-vs-skip-gram" target="_blank">CBOW vs Skip-Gram — Baeldung on CS</a></li>
+      <li><a href="https://arxiv.org/abs/2509.01606" target="_blank">Testing assumptions about geometry of sentence embedding spaces — arXiv 2509.01606 (2025)</a></li>
+      <li><a href="https://www.johnsnowlabs.com/understanding-the-power-of-transformers-a-guide-to-sentence-embeddings-in-spark-nlp/" target="_blank">Sentence Embeddings in Spark NLP — John Snow Labs</a></li>
+      <li><a href="https://datos.gob.es/en/blog/understanding-word-embeddings-how-machines-learn-meaning-words" target="_blank">Understanding Word Embeddings — datos.gob.es</a></li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function hsl(h, s, l) { return `hsl(${h},${s}%,${l}%)`; }
+
+// ─── Vector display ───────────────────────────────────────────────────────────
+const words = [
+  { label: '"cat"',     values: [0.82, 0.71, -0.12, 0.65, -0.44, 0.23, 0.51, -0.30] },
+  { label: '"kitten"',  values: [0.79, 0.68, -0.09, 0.61, -0.41, 0.21, 0.48, -0.27] },
+  { label: '"quantum"', values: [-0.31, 0.05,  0.88, -0.52,  0.72, -0.63,  0.14,  0.90] },
+];
+const vecEl = document.getElementById('vector-display');
+words.forEach(w => {
+  const row = document.createElement('div');
+  row.className = 'vector-row';
+  const lbl = document.createElement('div');
+  lbl.className = 'vector-label';
+  lbl.textContent = w.label;
+  const bars = document.createElement('div');
+  bars.className = 'vector-bars';
+  w.values.forEach(v => {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    const width = Math.abs(v) * 48 + 4;
+    b.style.width = width + 'px';
+    b.style.background = v > 0
+      ? `hsl(${lerp(200, 270, v)},80%,60%)`
+      : `hsl(${lerp(0, 30, -v)},80%,55%)`;
+    b.title = v.toFixed(2);
+    bars.appendChild(b);
+  });
+  const etc = document.createElement('span');
+  etc.style.cssText = 'color:var(--muted);font-size:0.8rem;margin-left:4px;';
+  etc.textContent = '… (768 dims total)';
+  row.appendChild(lbl);
+  row.appendChild(bars);
+  row.appendChild(etc);
+  vecEl.appendChild(row);
+});
+
+// ─── 2D embedding space canvas ────────────────────────────────────────────────
+const groups = [
+  { name: 'Animals', color: '#6c8ef5', points: [
+    { label: 'cat', x: 0.18, y: 0.22 },
+    { label: 'kitten', x: 0.21, y: 0.19 },
+    { label: 'dog', x: 0.25, y: 0.28 },
+    { label: 'puppy', x: 0.28, y: 0.25 },
+    { label: 'wolf', x: 0.30, y: 0.32 },
+  ]},
+  { name: 'Royalty', color: '#a78bfa', points: [
+    { label: 'king', x: 0.55, y: 0.20 },
+    { label: 'queen', x: 0.60, y: 0.16 },
+    { label: 'prince', x: 0.58, y: 0.24 },
+    { label: 'throne', x: 0.52, y: 0.18 },
+  ]},
+  { name: 'Countries', color: '#4ade80', points: [
+    { label: 'france', x: 0.72, y: 0.55 },
+    { label: 'paris', x: 0.75, y: 0.52 },
+    { label: 'germany', x: 0.68, y: 0.60 },
+    { label: 'berlin', x: 0.71, y: 0.58 },
+    { label: 'italy', x: 0.66, y: 0.53 },
+  ]},
+  { name: 'Tech', color: '#fbbf24', points: [
+    { label: 'neural', x: 0.40, y: 0.72 },
+    { label: 'model', x: 0.44, y: 0.75 },
+    { label: 'vector', x: 0.38, y: 0.77 },
+    { label: 'embedding', x: 0.42, y: 0.80 },
+    { label: 'loss', x: 0.46, y: 0.73 },
+  ]},
+  { name: 'Food', color: '#f87171', points: [
+    { label: 'bread', x: 0.15, y: 0.65 },
+    { label: 'butter', x: 0.18, y: 0.68 },
+    { label: 'cheese', x: 0.12, y: 0.70 },
+    { label: 'milk', x: 0.22, y: 0.63 },
+  ]},
+];
+
+let activeGroup = null;
+const canvas = document.getElementById('space-canvas');
+const ctx = canvas.getContext('2d');
+
+function setCanvasSize() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 360 * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '360px';
+}
+
+function drawCanvas() {
+  const W = parseInt(canvas.style.width);
+  const H = 360;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#13151f';
+  ctx.fillRect(0, 0, W, H);
+
+  // grid
+  ctx.strokeStyle = '#1e2035';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < W; i += 40) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
+  }
+  for (let j = 0; j < H; j += 40) {
+    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke();
+  }
+
+  groups.forEach(g => {
+    const highlight = activeGroup === null || activeGroup === g.name;
+    const alpha = highlight ? 1 : 0.2;
+
+    // cluster convex hull hint
+    if (highlight && g.points.length > 2) {
+      ctx.beginPath();
+      g.points.forEach((p, i) => {
+        const px = p.x * W, py = p.y * H;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+      ctx.fillStyle = g.color + '18';
+      ctx.fill();
+    }
+
+    g.points.forEach(p => {
+      const px = p.x * W, py = p.y * H;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.fillStyle = g.color;
+      ctx.fill();
+
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.fillStyle = '#e2e4f0';
+      ctx.fillText(p.label, px + 8, py + 4);
+      ctx.globalAlpha = 1;
+    });
+  });
+
+  // king - man + woman ≈ queen arrow
+  if (activeGroup === 'Royalty' || activeGroup === null) {
+    const W2 = parseInt(canvas.style.width);
+    const king   = { x: 0.55 * W2, y: 0.20 * H };
+    const man    = { x: 0.25 * W2, y: 0.28 * H };  // using 'dog' spot as 'man' proxy in demo
+    const queen  = { x: 0.60 * W2, y: 0.16 * H };
+    // skip the arrow for cleanliness; mention it in text
+  }
+}
+
+// Chips
+const chipWrap = document.getElementById('group-chips');
+groups.forEach(g => {
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.textContent = g.name;
+  chip.onclick = () => {
+    if (activeGroup === g.name) { activeGroup = null; chip.classList.remove('active'); }
+    else {
+      activeGroup = g.name;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+    drawCanvas();
+  };
+  chipWrap.appendChild(chip);
+});
+
+window.addEventListener('resize', () => { setCanvasSize(); drawCanvas(); });
+setTimeout(() => { setCanvasSize(); drawCanvas(); }, 50);
+
+// ─── Similarity pairs ──────────────────────────────────────────────────────────
+const simPairs = [
+  { a: 'cat', b: 'kitten',       sim: 0.93, note: 'Near-synonyms; same animal, both young/small — very close.' },
+  { a: 'cat', b: 'dog',          sim: 0.78, note: 'Same category (pets/animals) but different species — close, not identical.' },
+  { a: 'king', b: 'queen',       sim: 0.85, note: 'Royalty pair; semantically close, small gender offset.' },
+  { a: 'king', b: 'man',         sim: 0.62, note: 'Both are male, but king is role-specific — moderate similarity.' },
+  { a: 'car', b: 'automobile',   sim: 0.96, note: 'Near perfect synonyms — demonstrates BM25 would miss this.' },
+  { a: 'neural', b: 'bread',     sim: 0.08, note: 'Completely unrelated domains — nearly orthogonal vectors.' },
+  { a: 'not happy', b: 'happy',  sim: 0.72, note: 'Embeddings often blur negation — a known limitation.' },
+];
+const simContainer = document.getElementById('sim-pairs');
+let selectedPair = null;
+simPairs.forEach((pair, idx) => {
+  const row = document.createElement('div');
+  row.className = 'pair-row';
+  const colour = pair.sim > 0.85 ? '#4ade80' : pair.sim > 0.6 ? '#fbbf24' : '#f87171';
+  row.innerHTML = `
+    <div class="pair-words">
+      <span class="pair-word">"${pair.a}"</span>
+      <span style="color:var(--muted)"> ↔ </span>
+      <span class="pair-word">"${pair.b}"</span>
+    </div>
+    <div class="sim-bar-track">
+      <div class="sim-bar-fill" style="width:${pair.sim*100}%;background:${colour}"></div>
+    </div>
+    <div class="sim-value" style="color:${colour}">${pair.sim.toFixed(2)}</div>
+  `;
+  row.onclick = () => {
+    document.querySelectorAll('.pair-row').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+    document.getElementById('sim-caption').textContent = pair.note;
+  };
+  simContainer.appendChild(row);
+});
+
+// ─── Training demo ─────────────────────────────────────────────────────────────
+const trainSentences = [
+  { text: ['The', 'dog', 'chased', 'the', 'cat', 'down', 'the', 'street'], target: 1, context: [0,2,3], caption: 'Target: "dog". Context window picks up "The" and "chased". The model tries to predict these neighbours.' },
+  { text: ['The', 'dog', 'chased', 'the', 'cat', 'down', 'the', 'street'], target: 2, context: [1,3,4], caption: 'Target: "chased". Context includes "dog" and "cat". This pair-count nudges "dog" and "cat" slightly closer.' },
+  { text: ['The', 'dog', 'chased', 'the', 'cat', 'down', 'the', 'street'], target: 4, context: [2,3,5,6], caption: 'Target: "cat". "Dog" and "cat" keep appearing near each other — over millions of sentences, they converge in space.' },
+  { text: ['She', 'drove', 'her', 'car', 'to', 'the', 'garage'], target: 3, context: [1,2,4,5], caption: 'New sentence. Target: "car". Context: "drove", "her", "to", "the". Same co-occurrence counting applies.' },
+  { text: ['The', 'kitten', 'played', 'with', 'yarn', 'near', 'the', 'dog'], target: 1, context: [0,2,3,7], caption: 'Target: "kitten". "Dog" appears in context again. Over time, "dog" ↔ "kitten" edges accumulate — both land in the animal cluster.' },
+];
+let trainStep = 0;
+function renderTrainStep() {
+  const s = trainSentences[trainStep % trainSentences.length];
+  const el = document.getElementById('training-sentence');
+  el.innerHTML = s.text.map((w, i) => {
+    let cls = 'other';
+    if (i === s.target) cls = 'target';
+    else if (s.context.includes(i)) cls = 'context';
+    return `<span class="word-span ${cls}">${w}</span>`;
+  }).join(' ');
+  document.getElementById('training-caption').textContent = s.caption;
+}
+document.getElementById('training-btn').onclick = () => { trainStep++; renderTrainStep(); };
+renderTrainStep();
+
+// ─── Dimension grid ────────────────────────────────────────────────────────────
+const seedVectors = {
+  king:   [0.62,-0.31,0.78,-0.12,0.55,0.20,-0.43,0.67,0.11,-0.55,0.38,-0.22,0.80,0.14,-0.61,0.33,0.50,-0.18,0.72,-0.40,0.25,-0.68,0.45,0.09,-0.52,0.77,-0.30,0.60,0.18,-0.47,0.85,-0.25,0.40,0.63,-0.10,0.55,0.22,-0.70,0.49,0.15,-0.38,0.81,-0.20,0.57,0.30,-0.65,0.42,0.08,-0.58,0.73,-0.33,0.52,0.17,-0.48,0.66,-0.28,0.44,0.12,-0.60,0.78,-0.15,0.50,0.25,-0.45],
+  queen:  [0.58,-0.28,0.75,-0.08,0.52,0.65,-0.40,0.64,0.08,-0.52,0.35,-0.18,0.77,0.10,-0.58,0.30,0.47,-0.14,0.68,-0.36,0.22,-0.65,0.42,0.06,-0.49,0.74,-0.27,0.57,0.15,-0.44,0.82,-0.22,0.37,0.60,-0.07,0.52,0.19,-0.67,0.46,0.12,-0.35,0.78,-0.17,0.54,0.27,-0.62,0.39,0.05,-0.55,0.70,-0.30,0.49,0.14,-0.45,0.63,-0.25,0.41,0.09,-0.57,0.75,-0.12,0.47,0.22,-0.42],
+  man:    [0.55,-0.18,0.42,-0.05,0.30,0.10,-0.60,0.38,0.20,-0.42,0.22,-0.48,0.50,0.28,-0.35,0.18,0.65,-0.30,0.44,-0.18,0.40,-0.50,0.28,0.15,-0.35,0.52,-0.15,0.38,0.30,-0.28,0.60,-0.10,0.25,0.48,0.05,0.38,0.40,-0.55,0.32,0.28,-0.22,0.58,-0.05,0.35,0.48,-0.45,0.25,0.20,-0.40,0.55,-0.18,0.35,0.32,-0.28,0.48,-0.12,0.28,0.25,-0.42,0.60,0.00,0.35,0.40,-0.28],
+  woman:  [0.52,-0.15,0.39,-0.02,0.27,0.55,-0.57,0.35,0.17,-0.39,0.19,-0.44,0.47,0.24,-0.32,0.15,0.62,-0.26,0.40,-0.14,0.37,-0.47,0.25,0.12,-0.32,0.49,-0.12,0.35,0.27,-0.25,0.57,-0.07,0.22,0.45,0.02,0.35,0.37,-0.52,0.29,0.25,-0.19,0.55,-0.02,0.32,0.45,-0.42,0.22,0.17,-0.37,0.52,-0.15,0.32,0.29,-0.25,0.45,-0.09,0.25,0.22,-0.39,0.57,-0.03,0.32,0.37,-0.25],
+  paris:  [-0.20,0.55,0.30,0.68,-0.22,0.40,0.15,-0.10,0.72,-0.30,0.58,0.25,-0.15,0.80,-0.08,0.48,0.20,-0.55,0.35,0.65,-0.18,0.42,0.70,-0.25,0.38,0.12,-0.60,0.45,0.75,-0.20,0.28,0.62,-0.40,0.18,0.80,-0.15,0.55,0.10,-0.50,0.68,0.22,-0.35,0.60,0.15,-0.70,0.38,0.72,-0.28,0.45,0.08,-0.55,0.30,0.65,-0.18,0.40,0.12,-0.48,0.70,0.25,-0.35,0.58,0.18,-0.62,0.35],
+  france: [-0.18,0.52,0.27,0.65,-0.20,0.38,0.12,-0.08,0.70,-0.28,0.55,0.22,-0.12,0.78,-0.05,0.45,0.17,-0.52,0.32,0.62,-0.15,0.40,0.68,-0.22,0.35,0.10,-0.57,0.42,0.72,-0.18,0.25,0.60,-0.37,0.15,0.77,-0.12,0.52,0.08,-0.47,0.65,0.20,-0.32,0.57,0.12,-0.67,0.35,0.70,-0.25,0.42,0.05,-0.52,0.27,0.62,-0.15,0.37,0.10,-0.45,0.67,0.22,-0.32,0.55,0.15,-0.60,0.32],
+};
+
+function renderDimGrid(word) {
+  const vec = seedVectors[word];
+  const grid = document.getElementById('dim-grid');
+  grid.innerHTML = '';
+  vec.forEach((v, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'dim-cell';
+    const h = v > 0 ? lerp(200, 250, v) : lerp(0, 20, -v);
+    const s = 70;
+    const l = 20 + Math.abs(v) * 30;
+    cell.style.background = `hsl(${h},${s}%,${l}%)`;
+    cell.innerHTML = `<span style="font-size:0.6rem;color:rgba(255,255,255,0.7)">${v.toFixed(1)}</span><div class="dim-tooltip">dim ${i+1}: ${v.toFixed(3)}</div>`;
+    grid.appendChild(cell);
+  });
+}
+
+document.getElementById('word-select').onchange = e => renderDimGrid(e.target.value);
+renderDimGrid('king');
+
+// nav smooth scroll
+function scrollTo(hash) {
+  const el = document.querySelector(hash);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
