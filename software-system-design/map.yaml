@@ -1,0 +1,241 @@
+subject: Software System Design
+# Prerequisite edges are GENUINE comprehension requirements, not just nice ordering.
+# Soft "learn this first" preferences are expressed by `tier` (= longest-path depth), not by fake prereqs.
+# Emphasis: broad distributed-systems architecture (load balancing, caching, queues, APIs,
+# microservices, sharding, CAP), with enough data-internals (replication, partitioning,
+# consistency, consensus) to keep shaping understanding of data-intensive systems.
+# Recommended entry order among the tier-1 roots: client-server -> latency-throughput -> data-models.
+concepts:
+  - id: client-server
+    name: Client–Server Model & Request Lifecycle
+    summary: How a request travels from client to server and back, and where time and failure live along the path.
+    objective: Trace a request end to end and name the components it passes through.
+    prereqs: []
+    tier: 1
+    rubric:
+      - A client sends a request and a server returns a response over a defined protocol
+      - The path includes hops (DNS, network, server, data store) where latency and failure accumulate
+      - The server is a shared resource, so concurrent clients contend for it
+
+  - id: latency-throughput
+    name: Latency & Throughput
+    summary: The two core performance measures — how long one request takes versus how many you can serve.
+    objective: Distinguish latency from throughput and explain why optimizing one can hurt the other.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Latency is per-request time; throughput is requests served per unit time
+      - Tail latency (p95/p99) matters more than the average for user experience
+      - Batching, queuing, and concurrency trade latency against throughput
+
+  - id: data-models
+    name: Data Models & Storage
+    summary: How data is shaped and stored — relational, document, key-value, wide-column — and why the shape constrains queries.
+    objective: Compare data models and justify choosing one for a given access pattern.
+    prereqs: []
+    tier: 1
+    rubric:
+      - Relational, document, key-value, and wide-column models trade flexibility against query power
+      - The access pattern (reads vs writes, joins vs lookups) should drive the model choice
+      - Schema-on-write vs schema-on-read shifts where validation happens
+
+  - id: statelessness
+    name: Stateless vs Stateful Services
+    summary: Whether a service holds per-client state between requests, and what that costs when scaling.
+    objective: Explain why stateless services scale more easily and where state must still live.
+    prereqs: [client-server]
+    tier: 2
+    rubric:
+      - A stateless service keeps no per-client memory between requests; any instance can serve any request
+      - State that must persist is pushed to a shared store (cache, database, session store)
+      - Statelessness is what makes horizontal scaling and load balancing simple
+
+  - id: scaling
+    name: Vertical vs Horizontal Scaling
+    summary: Growing capacity by making one machine bigger versus adding more machines.
+    objective: Compare scaling up and scaling out, including the limits of each.
+    prereqs: [latency-throughput]
+    tier: 2
+    rubric:
+      - Vertical scaling adds resources to one node; horizontal scaling adds more nodes
+      - Vertical scaling hits a hard ceiling and a single point of failure
+      - Horizontal scaling adds capacity but introduces coordination and distribution problems
+
+  - id: caching
+    name: Caching
+    summary: Storing computed or fetched results closer to the request to avoid repeating expensive work.
+    objective: Explain what to cache, where, and why invalidation is the hard part.
+    prereqs: [client-server, latency-throughput]
+    tier: 2
+    rubric:
+      - A cache trades staleness and memory for lower latency on repeated reads
+      - Placement (client, CDN, application, database) changes hit rate and consistency
+      - Invalidation and eviction (TTL, LRU) are the central difficulty
+
+  - id: replication
+    name: Replication
+    summary: Keeping copies of the same data on multiple nodes for availability and read scaling.
+    objective: Explain why data is replicated and the tradeoffs of sync vs async replication.
+    prereqs: [data-models]
+    tier: 2
+    rubric:
+      - Replication keeps multiple copies of data for availability and read throughput
+      - Synchronous replication is durable but slow; asynchronous is fast but can lose recent writes
+      - Leader-follower and multi-leader topologies handle writes differently
+      - Read replicas offload read traffic from the primary, improving throughput at the cost of possible staleness
+
+  - id: indexing
+    name: Indexing
+    summary: Auxiliary data structures that let a store find rows without scanning everything.
+    objective: Explain how an index speeds reads and what it costs on writes.
+    prereqs: [data-models]
+    tier: 2
+    rubric:
+      - An index maps key values to record locations to avoid full scans
+      - Indexes speed reads but slow writes and consume storage
+      - The right index depends on the query's access pattern
+
+  - id: transactions-acid
+    name: Transactions & ACID
+    summary: The guarantees a database makes when bundling multiple operations into a single atomic unit.
+    objective: Define ACID properties and explain why each matters for data integrity.
+    prereqs: [data-models]
+    tier: 2
+    rubric:
+      - Atomicity means all operations in a transaction succeed or all are rolled back — never partially applied
+      - Isolation controls whether concurrent transactions can see each other's in-progress changes
+      - Durability means a committed transaction survives crashes; consistency is application-level correctness enforced by constraints
+
+  - id: api-design
+    name: API Design (REST / RPC)
+    summary: The contract between services — how callers request actions and receive results.
+    objective: Compare REST and RPC styles and explain what makes an API contract robust.
+    prereqs: [client-server]
+    tier: 2
+    rubric:
+      - An API is a versioned contract decoupling caller from implementation
+      - REST models resources; RPC models actions/procedures — each fits different needs
+      - Idempotency, versioning, and error semantics determine robustness
+
+  - id: load-balancing
+    name: Load Balancing
+    summary: Spreading incoming requests across many service instances to use capacity and survive failures.
+    objective: Explain how a load balancer distributes traffic and why it needs health checks.
+    prereqs: [statelessness, scaling]
+    tier: 3
+    rubric:
+      - A load balancer distributes requests across instances by a policy (round-robin, least-conn, hashing)
+      - Health checks route traffic away from failed or degraded instances
+      - Stateless backends let any instance serve any request, which load balancing relies on
+
+  - id: partitioning
+    name: Partitioning / Sharding
+    summary: Splitting one dataset across nodes so no single machine holds it all.
+    objective: Explain how data is partitioned and how partition-key choice affects balance.
+    prereqs: [scaling, replication, indexing]
+    tier: 3
+    rubric:
+      - Partitioning splits data by key (range or hash) so each node owns a subset
+      - A poor partition key causes hot spots and skew
+      - Partitioning is usually combined with replication of each partition
+
+  - id: message-queues
+    name: Message Queues & Async Processing
+    summary: Decoupling producers from consumers with a buffer so work happens asynchronously.
+    objective: Explain how a queue absorbs load spikes and what delivery guarantees it offers.
+    prereqs: [statelessness]
+    tier: 3
+    rubric:
+      - A queue decouples producers and consumers, smoothing bursts of work
+      - Async processing improves responsiveness and resilience to downstream slowness
+      - Delivery semantics (at-least-once, exactly-once) and ordering are explicit tradeoffs
+
+  - id: rate-limiting
+    name: Rate Limiting & Throttling
+    summary: Capping how many requests a client can make in a time window to protect the system from overload.
+    objective: Explain common rate-limiting algorithms and where in the stack they are applied.
+    prereqs: [api-design]
+    tier: 3
+    rubric:
+      - Rate limiting protects services from overload and abusive clients by enforcing a request budget per time window
+      - Token bucket and sliding window are common algorithms; each has different burst characteristics
+      - Limits can be enforced at the gateway, load balancer, or application layer
+
+  - id: cap-theorem
+    name: CAP & Availability Tradeoffs
+    summary: Under a network partition a distributed store must choose between consistency and availability.
+    objective: State the CAP tradeoff precisely and apply it to a partitioned system.
+    prereqs: [replication, partitioning, transactions-acid]
+    tier: 4
+    rubric:
+      - CAP says under a partition you must sacrifice either consistency or availability
+      - The choice is only forced during a partition, not at all times
+      - Real systems tune along a consistency/availability spectrum, not a binary
+
+  - id: microservices
+    name: Microservices vs Monolith
+    summary: Splitting an application into independently deployable services versus one unit.
+    objective: Weigh the costs and benefits of decomposing a system into services.
+    prereqs: [api-design, message-queues]
+    tier: 4
+    rubric:
+      - Microservices deploy and scale independently along service boundaries
+      - They trade local complexity for distributed-systems complexity (network, partial failure)
+      - Clear API contracts and async messaging are what make the split workable
+
+  - id: event-driven
+    name: Event-Driven Architecture & Streaming
+    summary: Services communicate by publishing immutable events to a log; any subscriber can consume independently, at their own pace.
+    objective: Contrast event-driven pub-sub with point-to-point queuing and explain what a durable ordered log provides.
+    prereqs: [message-queues]
+    tier: 4
+    rubric:
+      - A queue delivers a message to one consumer; an event log delivers the same event to all subscribers independently
+      - Events are immutable facts; consumers can replay from any offset to reconstruct state or catch up
+      - Ordering is guaranteed per partition, not globally, which constrains consumer design
+
+  - id: consistency-models
+    name: Consistency Models
+    summary: The guarantees a system makes about whether reads reflect the latest writes.
+    objective: Distinguish strong from eventual consistency and place common guarantees between them.
+    prereqs: [cap-theorem]
+    tier: 5
+    rubric:
+      - Strong consistency means every read sees the latest committed write
+      - Eventual consistency allows temporary staleness that converges over time
+      - Intermediate models (read-your-writes, monotonic reads) sit between the two
+      - Linearizability is the strongest form: operations appear to take effect at a single instant, globally visible to all nodes
+
+  - id: event-sourcing
+    name: Event Sourcing
+    summary: Storing every state change as an appended event rather than overwriting current state, so history is always replayable.
+    objective: Explain what event sourcing gains over mutable-state storage and what it costs in query complexity.
+    prereqs: [event-driven, data-models]
+    tier: 5
+    rubric:
+      - State is derived by replaying an ordered event log, not read from a mutable row
+      - The log is the source of truth; current-state views (projections) are derived and can be rebuilt
+      - Queries against current state require a separate read model (CQRS pattern), adding complexity
+
+  - id: failure-modes
+    name: Failure Modes & Resilience Patterns
+    summary: How distributed services fail and the patterns — retries, timeouts, circuit breakers — that limit the blast radius.
+    objective: Identify common distributed failure modes and select the right mitigation pattern for each.
+    prereqs: [microservices, load-balancing]
+    tier: 5
+    rubric:
+      - Partial failure is the norm: a service can be slow, dropping packets, or crash-looping independently of others
+      - Timeouts bound how long a caller waits; retries with backoff reduce thundering herd; circuit breakers stop calling a known-failing dependency
+      - Bulkheads isolate failure domains so one slow dependency cannot exhaust the caller's thread pool
+
+  - id: consensus
+    name: Consensus & Leader Election
+    summary: Getting multiple nodes to agree on a single value or leader despite failures.
+    objective: Explain what consensus provides and why it underpins strongly consistent systems.
+    prereqs: [replication, consistency-models]
+    tier: 6
+    rubric:
+      - Consensus lets a cluster agree on one value despite node failures
+      - A quorum (majority) is needed to make progress safely
+      - Algorithms like Raft/Paxos provide leader election and an ordered, replicated log
+      - The primary product is a totally ordered, replicated log; leader election is the mechanism that maintains it

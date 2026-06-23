@@ -7,3 +7,11 @@ subjects:
     cards: ai-retrieval/cards.yaml
     deep_dives: ai-retrieval/deep-dives/index.yaml
     description: "Embeddings, chunking, vector search, RAG, GraphRAG, and retrieval evaluation."
+  - id: software-system-design
+    name: Software System Design
+    folder: software-system-design/
+    map: software-system-design/map.yaml
+    progress: software-system-design/progress.yaml
+    cards: software-system-design/cards.yaml
+    deep_dives: software-system-design/deep-dives/index.yaml
+    description: "Client–server fundamentals, scaling, caching, load balancing, queues, APIs, microservices, partitioning, replication, CAP, consistency, and consensus — broad system design with a data-intensive spine."

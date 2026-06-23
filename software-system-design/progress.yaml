@@ -1,0 +1,90 @@
+subject: Software System Design
+# state: unseen | encountered | understood | shaky
+# Frontier starts at the tier-1 roots (no prerequisites):
+#   client-server, latency-throughput, data-models.
+# Recommended first step: client-server, then latency-throughput.
+mastery:
+  - id: client-server
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: latency-throughput
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: data-models
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: statelessness
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: scaling
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: caching
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: replication
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: indexing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: api-design
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: load-balancing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: partitioning
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: message-queues
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: cap-theorem
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: microservices
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: consistency-models
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: transactions-acid
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: rate-limiting
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: event-driven
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: event-sourcing
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: failure-modes
+    state: unseen
+    last_reviewed: null
+    misconceptions: []
+  - id: consensus
+    state: unseen
+    last_reviewed: null
+    misconceptions: []

@@ -1,6 +1,6 @@
-# LearnLoop — Cowork starter
+# studyg
 
-A personal learning system that runs entirely inside Cowork. **The files are the database; the agent is the runtime.** No servers, no setup — open this folder in Cowork and start talking to it.
+A personal learning system that runs entirely in a Claude conversation. **The files are the database; the agent is the runtime.** No servers, no setup — open this folder and start talking.
 
 ## How to start
 
@@ -24,6 +24,7 @@ The agent reads your concept map and progress at the start of each session and w
 
 - `status` — where you are across subjects.
 - `learn <subject>` / `next` — take the next step along the map (depth).
+- `test <concept>` — skip straight to the Socratic check for a concept you've already studied.
 - `digest` — curate today's news against your concept map (breadth).
 - `deep dive <n>` — generate a grounded interactive explainer for an item.
 - `review` — run due spaced-recall cards.
