@@ -109,7 +109,7 @@ For each subject, determine its **mode**:
 1. Load the map + progress; compute the frontier.
 2. **Select the next concept** by priority: frontier-proximity, then any `shaky` concepts needing rework, then interest. **Never pick a concept whose prerequisites aren't all `understood`** — the prerequisite gate is absolute.
 3. Teach a single grounded step into that concept (web-search to ground it; cite sources). Set its state to `encountered`.
-4. Run a short Socratic check — a couple of questions aimed at the concept's **rubric**, not "make sense?".
+4. Open with one natural question aimed at the concept's rubric — not "make sense?". Follow the answer: probe further only where rubric points haven't yet surfaced. Don't pre-load all rubric points as separate questions; let the exchange develop and steer toward gaps.
 5. **Grade against the rubric, honestly.** If all key points are met → `understood`. If not → `shaky`, and record the misconception. Be willing to mark `shaky`; an agreeable pass teaches nothing.
 6. Write progress back. Report plainly: what stuck, what's shaky, what's next.
 7. Offer to mint cards for what was just understood.
@@ -118,7 +118,7 @@ For each subject, determine its **mode**:
 Use when the user has already studied a concept (e.g. via a deep dive) and wants to skip straight to assessment.
 **Precondition:** the concept must be at least `encountered` in progress. If it is still `unseen`, say so and suggest either `learn <subject>` or `deep dive` first — do not run the Socratic check on a concept the user has never been introduced to.
 1. Load the concept's rubric from the map.
-2. Run the Socratic check — a couple of targeted questions aimed squarely at the rubric points. No re-teaching first. **Question discipline:** each question must be specific enough that a correct answer would naturally surface the rubric point being tested. If a question is open-ended and a rubric point isn't volunteered, ask a follow-up that directly targets it before marking the point as missed.
+2. Open with one natural question. No re-teaching first. Follow the answer — probe further only where rubric points haven't yet surfaced. Don't ask a predetermined list; let the exchange develop and steer toward gaps organically. Only mark a rubric point missed if a targeted follow-up also failed to draw it out.
 3. **Grade against the rubric, honestly.** If all key points are met → mark `understood` and write progress back. If not → mark `shaky`, record the misconception, and write progress back.
 4. Report plainly: what was demonstrated, what was missing, what's now unblocked (or still blocked).
 5. Offer to mint recall cards if marked `understood`.
@@ -140,8 +140,11 @@ Use when the user has already studied a concept (e.g. via a deep dive) and wants
 ### `assess <subject>` — placement interview
 Use to calibrate progress for a subject from scratch or to re-calibrate after significant outside study. Works on any subject, new or existing.
 1. Load the map. Select 6–8 representative concepts spanning tiers 1 through the deepest tier, weighted toward concepts whose current state is `unseen` or `encountered`.
-2. For each selected concept, ask one or two targeted Socratic questions aimed squarely at its rubric — the same style as `test`. No teaching first. **Question discipline:** each question must be specific enough that a correct answer would naturally surface the rubric point being tested. A broad open-ended question does not license marking a rubric point as missed — if the question didn't directly invite the point, use a follow-up question rather than penalising the omission.
-3. Grade each honestly:
+2. Work through the selected concepts **one at a time**. For each concept:
+   a. Open with one natural question. **Wait for the user's answer before continuing.** No teaching first.
+   b. Follow the answer — probe further only where rubric points haven't yet surfaced. Don't front-load all rubric points as separate questions; steer toward gaps as they emerge. Only mark a rubric point missed if a targeted follow-up also failed to draw it out.
+   c. Grade the concept immediately after the exchange (see grading below) and announce the result briefly ("Marked understood." / "Marked shaky — [gap]." ) before moving to the next concept.
+3. Grading per concept:
    - All rubric points met → `understood`
    - Partially met → `shaky` (record the gap in `misconceptions`)
    - Some familiarity but rubric not fully testable → `encountered`

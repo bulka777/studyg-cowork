@@ -5,12 +5,12 @@ subject: Investing
 # Recommended first step: financial-markets, then risk-return.
 mastery:
   - id: money-time-value
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: risk-return
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: financial-markets
     state: unseen
@@ -21,12 +21,12 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: equities
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: bonds
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: market-structure
     state: unseen
@@ -49,20 +49,21 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: equity-valuation
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: shaky
+    last_reviewed: 2026-06-23
+    misconceptions:
+      - "Knows price-to-earnings intuition but missing the DCF mechanism: stock price = PV of future cash flows discounted to today."
   - id: diversification
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: derivatives
     state: unseen
     last_reviewed: null
     misconceptions: []
   - id: market-efficiency
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: portfolio-construction
     state: unseen

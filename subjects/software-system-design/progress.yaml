@@ -1,5 +1,5 @@
 subject: Software System Design
-# state: unseen | encountered | understood | shaky
+# state: encountered | encountered | understood | shaky
 # Frontier starts at the tier-1 roots (no prerequisites):
 #   client-server, latency-throughput, data-models.
 # Recommended first step: client-server, then latency-throughput.
@@ -9,7 +9,7 @@ mastery:
     last_reviewed: "2026-06-23"
     misconceptions: []
   - id: latency-throughput
-    state: shaky
+    state: encountered
     last_reviewed: "2026-06-23"
     misconceptions:
       - "assess 2026-06-23: Inverted p99 definition (said 1% complete within 800ms; correct is 1% take longer than 800ms). Did not articulate that batching/queuing/concurrency are the mechanisms trading latency vs throughput."
@@ -30,7 +30,7 @@ mastery:
     last_reviewed: "2026-06-23"
     misconceptions: []
   - id: replication
-    state: shaky
+    state: encountered
     last_reviewed: "2026-06-23"
     misconceptions:
       - "assess 2026-06-23: Framed async crash risk as staleness; actual risk is permanent data loss for writes acknowledged by primary but not yet propagated to replicas. Also missing leader/follower topology and multi-region replication."
@@ -47,24 +47,24 @@ mastery:
     last_reviewed: "2026-06-23"
     misconceptions: []
   - id: partitioning
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: message-queues
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: cap-theorem
-    state: shaky
+    state: encountered
     last_reviewed: "2026-06-23"
     misconceptions:
       - "assess 2026-06-23: Called P 'Partition Failure' rather than Partition Tolerance. Gave binary framing; missed that the C/A tradeoff is only forced during an active partition, and that real systems tune along a spectrum."
   - id: microservices
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: consistency-models
-    state: shaky
+    state: encountered
     last_reviewed: "2026-06-23"
     misconceptions:
       - "assess 2026-06-23: Missing intermediate consistency models (read-your-writes, monotonic reads) and linearizability as the strongest form."
@@ -77,58 +77,58 @@ mastery:
     last_reviewed: "2026-06-23"
     misconceptions: []
   - id: cdn
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: authn-authz
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: push-communication
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: rate-limiting
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: event-driven
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: consistent-hashing
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: batch-stream-processing
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: event-sourcing
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: failure-modes
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: observability
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: service-discovery
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: saga
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: consensus
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
   - id: logical-clocks
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []

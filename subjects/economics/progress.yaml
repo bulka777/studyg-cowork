@@ -1,70 +1,86 @@
 subject: Economics
 # state: unseen | encountered | understood | shaky
-# Frontier starts at the tier-1 roots (no prerequisites):
-#   scarcity, supply-demand, money.
-# Recommended first step: scarcity, then supply-demand.
 mastery:
   - id: scarcity
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
+
   - id: supply-demand
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: "2026-06-23"
     misconceptions: []
+
   - id: money
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "Suggested money's value comes from 'protection of authority' rather than trust and acceptance; unit of account not clearly articulated"
+
   - id: elasticity
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: markets-prices
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: inflation
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "Identified money growth correctly but did not distinguish demand-pull vs cost-push; purchasing power erosion and CPI not mentioned"
+
   - id: banking-credit
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: trade
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: gdp
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: interest-rates
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "Named supply/demand as a driver but did not mention expected inflation or risk premium as additional factors"
+
   - id: central-banks
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: exchange-rates
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: business-cycle
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: unemployment
     state: unseen
     last_reviewed: null
     misconceptions: []
+
   - id: monetary-policy
-    state: unseen
-    last_reviewed: null
+    state: understood
+    last_reviewed: "2026-06-23"
     misconceptions: []
+
   - id: fiscal-policy
-    state: unseen
-    last_reviewed: null
-    misconceptions: []
+    state: encountered
+    last_reviewed: "2026-06-23"
+    misconceptions:
+      - "Named the two levers (spending/taxes) and debt constraint, but did not articulate how they affect aggregate demand or the expansionary/contractionary framework"
