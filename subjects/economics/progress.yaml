@@ -29,7 +29,7 @@ mastery:
 
   - id: inflation
     state: encountered
-    last_reviewed: "2026-06-23"
+    last_reviewed: "2026-06-23"  # deep-dive: tariffs-inflation-components-2026
     misconceptions:
       - "Identified money growth correctly but did not distinguish demand-pull vs cost-push; purchasing power erosion and CPI not mentioned"
 
@@ -65,8 +65,8 @@ mastery:
     misconceptions: []
 
   - id: business-cycle
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: "2026-06-23"
     misconceptions: []
 
   - id: unemployment

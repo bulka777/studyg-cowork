@@ -1,1 +1,9 @@
-deep_dives: []
+deep_dives:
+  - id: tariffs-inflation-components-2026
+    file: deep-dives/tariffs-inflation-components-2026.html
+    generated: 2026-06-23
+    source_url: https://www.frbsf.org/research-and-insights/publications/economic-letter/2026/03/effects-of-tariffs-on-components-of-inflation/
+    source_title: "The Effects of Tariffs on the Components of Inflation"
+    concepts: [inflation, business-cycle]
+    cards_minted: false
+    summary: "SF Fed research: tariffs cause initial demand contraction (energy prices fall), then slow goods inflation (+1.2pp peak yr 2) and sticky services inflation (+0.6pp yr 3-4); the two-stage dynamic and implications for 2026 US economy."

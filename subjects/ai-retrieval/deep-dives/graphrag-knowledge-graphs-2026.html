@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: GraphRAG & Knowledge Graphs (2026)</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222638;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #2d3556;
+    --sourced: #1e3a2f;
+    --sourced-border: #34d399;
+    --illus: #1e2a3d;
+    --illus-border: #60a5fa;
+    --warn: #2d2010;
+    --warn-border: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Georgia', serif; font-size: 16px; line-height: 1.7; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; }
+  .header-meta { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+  header .byline { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
+  header .byline a { color: var(--accent); }
+
+  .concepts-bar { background: var(--surface2); padding: 12px 32px; display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .concept-tag { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.5px; font-family: monospace; }
+  .concept-tag.new { background: var(--accent2); }
+
+  .layout { max-width: 1200px; margin: 0 auto; padding: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-header { background: var(--surface2); padding: 14px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); border-bottom: 1px solid var(--border); }
+  .panel-body { padding: 20px; }
+
+  .article-text { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
+  .article-text h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 20px 0 8px; }
+  .article-text h3 { font-size: 1rem; font-weight: 700; color: var(--accent2); margin: 16px 0 6px; }
+  .article-text p { margin-bottom: 12px; }
+  .article-text ul { margin: 8px 0 12px 20px; }
+  .article-text li { margin-bottom: 6px; }
+  .article-text strong { color: #c4b5fd; }
+  .article-text em { color: var(--text-muted); }
+
+  .sourced { background: var(--sourced); border-left: 3px solid var(--sourced-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .sourced::before { content: "📄 SOURCED TRUTH"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--sourced-border); margin-bottom: 6px; }
+
+  .illus { background: var(--illus); border-left: 3px solid var(--illus-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .illus::before { content: "💡 ILLUSTRATION / MODEL"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--illus-border); margin-bottom: 6px; }
+
+  .warn { background: var(--warn); border-left: 3px solid var(--warn-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .warn::before { content: "⚠ NOTE"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--warn-border); margin-bottom: 6px; }
+
+  .concept-section { margin-bottom: 28px; }
+  .concept-title { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .concept-title::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); }
+
+  .rubric { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-top: 12px; }
+  .rubric-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .rubric ul { margin-left: 16px; }
+  .rubric li { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+  .rubric li::marker { color: var(--accent); }
+
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; margin-bottom: 16px; }
+  .tl-item::before { content: ""; position: absolute; left: -17px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .tl-date { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 2px; }
+  .tl-text { font-size: 0.88rem; color: var(--text); }
+
+  .comparison-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+  .comparison-table th { background: var(--surface2); color: var(--accent); padding: 8px 10px; text-align: left; border: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .comparison-table td { padding: 8px 10px; border: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  .comparison-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  .graph-viz { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 14px 0; }
+  .graph-viz svg { width: 100%; height: auto; }
+
+  .toggle-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; margin-top: 8px; transition: all 0.2s; }
+  .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .collapsible { display: none; }
+  .collapsible.open { display: block; }
+
+  /* ---- Full-width technical deep-dive section ---- */
+  .fullwidth { max-width: 1200px; margin: 0 auto; padding: 0 32px 32px; }
+  .deep-banner { background: linear-gradient(90deg, var(--surface2), var(--surface)); border: 1px solid var(--border); border-left: 4px solid var(--accent2); border-radius: 10px; padding: 18px 24px; margin: 8px 0 28px; }
+  .deep-banner h2 { font-size: 1.3rem; color: var(--accent2); margin-bottom: 6px; }
+  .deep-banner p { font-size: 0.9rem; color: var(--text-muted); }
+
+  .deep-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 28px; }
+  .deep-section > h3 { font-size: 1.15rem; color: var(--accent); margin-bottom: 4px; }
+  .deep-section > .sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; font-style: italic; }
+  .deep-section h4 { font-size: 1rem; color: var(--accent2); margin: 20px 0 8px; }
+  .deep-section p { font-size: 0.92rem; line-height: 1.75; margin-bottom: 12px; }
+  .deep-section strong { color: #c4b5fd; }
+  .deep-section code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-size: 0.85em; color: #fcd34d; }
+
+  /* phase steps */
+  .phase { display: flex; gap: 16px; margin-bottom: 14px; align-items: flex-start; }
+  .phase-num { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+  .phase-body { flex: 1; }
+  .phase-body .ptitle { font-weight: 700; color: var(--text); font-size: 0.95rem; margin-bottom: 2px; }
+  .phase-body .pdesc { font-size: 0.88rem; color: var(--text-muted); }
+  .phase-body .pdesc strong { color: #c4b5fd; }
+
+  /* vector store cards */
+  .vstore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 18px 0; }
+  @media (max-width: 760px) { .vstore-grid { grid-template-columns: 1fr; } }
+  .vstore-card { border: 1px solid var(--border); border-radius: 8px; padding: 16px; background: var(--surface2); }
+  .vstore-card.entity { border-top: 3px solid #6c8ef7; }
+  .vstore-card.textunit { border-top: 3px solid #34d399; }
+  .vstore-card.community { border-top: 3px solid #a78bfa; }
+  .vstore-card h5 { font-size: 0.9rem; margin-bottom: 8px; color: var(--text); }
+  .vstore-card .vmeta { font-family: monospace; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 10px; word-break: break-all; }
+  .vstore-card ul { list-style: none; }
+  .vstore-card li { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 7px; padding-left: 14px; position: relative; line-height: 1.5; }
+  .vstore-card li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+  .vstore-card .used { margin-top: 10px; font-size: 0.75rem; color: var(--text); border-top: 1px dashed var(--border); padding-top: 8px; }
+
+  .route-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; margin: 14px 0; }
+  .route-table th { background: var(--surface2); color: var(--accent); padding: 9px 11px; text-align: left; border: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .route-table td { padding: 9px 11px; border: 1px solid var(--border); color: var(--text); vertical-align: top; line-height: 1.5; }
+  .route-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .route-table code { background: var(--bg); padding: 1px 5px; border-radius: 4px; color: #fcd34d; font-size: 0.85em; }
+
+  .example-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin: 14px 0; font-size: 0.86rem; }
+  .example-box .q { color: #fcd34d; font-style: italic; margin-bottom: 10px; }
+  .example-box ol { margin-left: 18px; }
+  .example-box li { margin-bottom: 7px; line-height: 1.55; color: var(--text-muted); }
+  .example-box li strong { color: #c4b5fd; }
+
+  .big-viz { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .big-viz svg { width: 100%; height: auto; min-width: 620px; font-family: monospace; }
+  .viz-caption { text-align: center; font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; font-style: italic; }
+
+  footer { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 16px; }
+
+  /* Annotation highlights */
+  .highlight { background: rgba(108,142,247,0.12); border-bottom: 2px solid rgba(108,142,247,0.6); cursor: pointer; border-radius: 2px; padding: 0 2px; transition: background 0.15s, border-color 0.15s; }
+  .highlight:hover { background: rgba(108,142,247,0.28); border-bottom-color: var(--accent); }
+  .highlight.active { background: rgba(167,139,250,0.22); border-bottom-color: var(--accent2); }
+  .highlight-demo { background: rgba(108,142,247,0.12); border-bottom: 2px solid rgba(108,142,247,0.6); border-radius: 2px; padding: 0 2px; }
+  .ann-placeholder { padding: 24px 0; color: var(--text-muted); }
+  .ann-placeholder p { margin-bottom: 10px; font-size: 0.9rem; }
+  .annotation-panel { position: sticky; top: 20px; }
+  #ann-body .concept-title { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  #ann-body .concept-title::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-meta">AI Retrieval · Deep Dive · 2026-06-23</div>
+  <h1>GraphRAG in 2026: Knowledge Graphs Meet Retrieval</h1>
+  <div class="byline">
+    Primary source: <a href="https://medium.com/@tongbing00/graphrag-in-2026-a-practical-buyers-guide-to-knowledge-graph-augmented-rag-43e5e72d522d" target="_blank">"GraphRAG in 2026: A Practical Buyer's Guide to Knowledge-Graph–Augmented RAG"</a>
+    · Tongbing · Medium · Jan 14, 2026
+  </div>
+</header>
+
+<div class="concepts-bar">
+  <span class="concept-tag new">knowledge-graphs ✦ new</span>
+  <span class="concept-tag new">graph-rag ✦ new</span>
+  <span class="concept-tag">embeddings</span>
+  <span class="concept-tag">lexical-search</span>
+  <span class="concept-tag">basic-rag</span>
+</div>
+
+<div style="max-width:1200px; margin:28px auto 0; padding:0 32px 24px">
+  <div class="deep-banner">
+    <h2>Section 1 — Annotated Article</h2>
+    <p>Faithful excerpt from the source article. Click any <span style="background:rgba(108,142,247,0.15);border-bottom:2px solid rgba(108,142,247,0.6);padding:0 2px;border-radius:2px">highlighted passage</span> to open a focused concept explanation in the right panel.</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Original Article -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">📰 Original Article — Faithful Excerpt</div>
+      <div class="panel-body article-text">
+
+        <p><em>Attribution: "GraphRAG in 2026: A Practical Buyer's Guide to Knowledge-Graph–Augmented RAG" by Tongbing, published on Medium, January 14, 2026. Full article at <a href="https://medium.com/@tongbing00/graphrag-in-2026-a-practical-buyers-guide-to-knowledge-graph-augmented-rag-43e5e72d522d" style="color:var(--accent)" target="_blank">medium.com</a>.</em></p>
+
+        <p>Enterprises have largely internalized the first lesson of Retrieval-Augmented Generation (RAG): better retrieval reduces hallucinations. The second lesson is arriving fast: <span class="highlight" data-ann="rag-wall"><strong>retrieval alone isn't "reasoning."</strong></span> In complex knowledge environments — policies that reference other policies, cases that depend on chains of events, systems where the answer is a relationship — not just a paragraph — classic "retrieve → stitch → generate" starts to plateau.</p>
+
+        <p>That is where <strong>GraphRAG</strong> (knowledge-graph–enhanced RAG) is gaining traction. Instead of treating your knowledge base as isolated chunks, GraphRAG attempts to model <span class="highlight" data-ann="knowledge-graphs"><strong>entities and their relationships</strong></span>, enabling multi-hop queries, cross-document linking, and more structured grounding.</p>
+
+        <h2>Why GraphRAG</h2>
+        <p>Traditional RAG excels when the user's question matches a <em>single</em> passage. It struggles when the answer requires:</p>
+        <ul>
+          <li><span class="highlight" data-ann="multi-hop"><strong>Multi-hop reasoning</strong> (A relates to B which triggers C…)</span></li>
+          <li><strong>Cross-document synthesis</strong> (policy + ticket + runbook + architecture note)</li>
+          <li><strong>Entity-centric questions</strong> ("Which customers were impacted by services that depend on X?")</li>
+          <li><span class="highlight" data-ann="global-queries"><strong>Global thematic questions</strong> ("What are the recurring root causes across incidents?")</span></li>
+        </ul>
+        <p>Many GraphRAG approaches build a graph during indexing (entities/relations), then use it at query time via graph traversal, summarization, or both.</p>
+
+        <h2>The 2026 GraphRAG Landscape</h2>
+
+        <h3>Microsoft GraphRAG — open-source, local vs. global query model</h3>
+        <p><span class="highlight" data-ann="ms-graphrag">Microsoft Research's open GraphRAG pipeline builds a graph + community hierarchy and uses it to answer questions over private corpora.</span> A well-documented separation between <span class="highlight" data-ann="local-global"><strong>local search</strong> (entity-based context building) and <strong>global search</strong> (community-report map-reduce summarization for broad questions)</span>. Strong fit for Microsoft ecosystem (Azure OpenAI).</p>
+
+        <h3>LightRAG (HKU) — dual-level retrieval</h3>
+        <p>A research-to-open-source implementation combining graph structure with text indexing. A <strong>dual-level retrieval system</strong> covering both "low-level factual" and "high-level conceptual" queries in a unified approach.</p>
+
+        <h3>fast-graphrag — lightweight, customizable</h3>
+        <p>An open-source "speed-first" GraphRAG implementation using graph exploration techniques including <span class="highlight" data-ann="pagerank"><strong>Personalized PageRank</strong></span> at inference time. A toolkit for experimentation — not an end-to-end enterprise system.</p>
+
+        <h3>EcphoryRAG — research-driven multi-hop</h3>
+        <p>A newer research framework modeling retrieval as cue-driven activation and multi-hop expansion over an entity-centered graph. Claims <span class="highlight" data-ann="benchmarks">average Exact Match improvement from 0.392 to 0.474</span> over selected KG-RAG baselines on multi-hop QA datasets.</p>
+
+        <h2>A Simple Selection Map</h2>
+        <ul>
+          <li><strong>Enterprise delivery:</strong> KnowCosmos Hybrid RAG on Galaxybase</li>
+          <li><strong>Microsoft ecosystem + open framework:</strong> Microsoft GraphRAG</li>
+          <li><strong>Research-backed open-source:</strong> LightRAG</li>
+          <li><strong>Lightweight + hackable baseline:</strong> fast-graphrag</li>
+          <li><strong>Multi-hop retrieval R&D:</strong> EcphoryRAG</li>
+        </ul>
+
+        <div class="warn">
+          The article is a buyer's guide written by an individual (7 followers on Medium). The comparative claims are opinion/summary, not peer-reviewed benchmarks. The EcphoryRAG benchmark figure (0.392→0.474 EM) comes from the paper's own evaluation; independent replication varies.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Annotation panel — starts empty, populated on click -->
+  <div>
+    <div class="panel annotation-panel" id="ann-panel">
+      <div class="panel-header">🔍 Concept Annotation</div>
+      <div class="panel-body" id="ann-body">
+        <div class="ann-placeholder">
+          <p>Click a <span class="highlight-demo">highlighted passage</span> in the article to open a focused explanation here.</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Each annotation covers the concept's mechanism, history, and why it matters in context of that sentence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ FULL-WIDTH TECHNICAL DEEP DIVE ============ -->
+<div class="fullwidth">
+
+  <div class="deep-banner">
+    <h2>Section 2 — Under the Hood: How GraphRAG Actually Works</h2>
+    <p>Section 1 above covers the annotated article. This section opens GraphRAG up end-to-end — how text is chunked and vectorized, what the <strong>three vector stores</strong> actually contain, and exactly how a query is routed between the entity store and the community store. Grounded primarily in the <a href="https://microsoft.github.io/graphrag/index/default_dataflow/" style="color:var(--accent)" target="_blank">Microsoft GraphRAG indexing &amp; query documentation</a>; the green/blue seam convention from above still applies.</p>
+  </div>
+
+  <!-- SECTION 1: INDEXING PIPELINE -->
+  <div class="deep-section">
+    <h3>1 · The Indexing Pipeline — Six Phases from Raw Text to Knowledge Model</h3>
+    <div class="sub">Sourced from Microsoft GraphRAG "Default Dataflow" documentation. This is the <em>build</em> step — it runs once (and on updates), not per query.</div>
+
+    <div class="big-viz">
+      <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" font-size="11">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+        <!-- Phase boxes -->
+        <!-- 1 docs -->
+        <rect x="10" y="95" width="95" height="55" rx="6" fill="#1a2550" stroke="#6c8ef7" stroke-width="1.5"/>
+        <text x="57" y="118" fill="#e2e8f0" text-anchor="middle">Documents</text>
+        <text x="57" y="133" fill="#94a3b8" text-anchor="middle" font-size="9">.txt / CSV rows</text>
+        <!-- 2 chunk -->
+        <rect x="140" y="95" width="105" height="55" rx="6" fill="#1e3a2f" stroke="#34d399" stroke-width="1.5"/>
+        <text x="192" y="115" fill="#e2e8f0" text-anchor="middle">Text Units</text>
+        <text x="192" y="130" fill="#94a3b8" text-anchor="middle" font-size="9">chunks · 1200 tok</text>
+        <text x="192" y="142" fill="#94a3b8" text-anchor="middle" font-size="9">unique id + source</text>
+        <!-- 3 extract -->
+        <rect x="280" y="70" width="120" height="48" rx="6" fill="#1a2550" stroke="#6c8ef7" stroke-width="1.5"/>
+        <text x="340" y="90" fill="#e2e8f0" text-anchor="middle">Entities +</text>
+        <text x="340" y="105" fill="#e2e8f0" text-anchor="middle">Relationships</text>
+        <rect x="280" y="128" width="120" height="40" rx="6" fill="#2d2010" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4,2"/>
+        <text x="340" y="145" fill="#e2e8f0" text-anchor="middle" font-size="10">Claims (Covariates)</text>
+        <text x="340" y="158" fill="#94a3b8" text-anchor="middle" font-size="8">optional · off by default</text>
+        <!-- 4 communities -->
+        <rect x="435" y="95" width="115" height="55" rx="6" fill="#1a2550" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="492" y="113" fill="#e2e8f0" text-anchor="middle">Communities</text>
+        <text x="492" y="128" fill="#94a3b8" text-anchor="middle" font-size="9">Leiden hierarchy</text>
+        <text x="492" y="140" fill="#94a3b8" text-anchor="middle" font-size="9">level 0,1,2…</text>
+        <!-- 5 reports -->
+        <rect x="585" y="95" width="115" height="55" rx="6" fill="#241a3d" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="642" y="113" fill="#e2e8f0" text-anchor="middle">Community</text>
+        <text x="642" y="128" fill="#e2e8f0" text-anchor="middle">Reports</text>
+        <text x="642" y="142" fill="#94a3b8" text-anchor="middle" font-size="9">LLM summaries</text>
+        <!-- 6 embed -->
+        <rect x="735" y="80" width="150" height="90" rx="6" fill="#0f1117" stroke="#34d399" stroke-width="2"/>
+        <text x="810" y="100" fill="#34d399" text-anchor="middle" font-weight="bold">Text Embedding</text>
+        <text x="810" y="118" fill="#94a3b8" text-anchor="middle" font-size="9">→ entity descriptions</text>
+        <text x="810" y="132" fill="#94a3b8" text-anchor="middle" font-size="9">→ text-unit text</text>
+        <text x="810" y="146" fill="#94a3b8" text-anchor="middle" font-size="9">→ community reports</text>
+        <text x="810" y="162" fill="#34d399" text-anchor="middle" font-size="9">written to vector store</text>
+        <!-- arrows -->
+        <line x1="105" y1="122" x2="138" y2="122" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="245" y1="118" x2="278" y2="100" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="245" y1="126" x2="278" y2="145" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="400" y1="110" x2="433" y2="118" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="550" y1="122" x2="583" y2="122" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="700" y1="122" x2="733" y2="122" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+        <!-- feeders into embed (dashed) showing text units + entities also embedded -->
+        <path d="M192,150 C192,210 760,210 760,170" fill="none" stroke="#34d399" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="455" y="225" fill="#34d399" text-anchor="middle" font-size="9">text-unit text is embedded directly (does not need the graph)</text>
+        <!-- phase labels -->
+        <text x="57" y="80" fill="#6c8ef7" text-anchor="middle" font-size="9">PHASE 1–2</text>
+        <text x="340" y="58" fill="#6c8ef7" text-anchor="middle" font-size="9">PHASE 3</text>
+        <text x="492" y="83" fill="#a78bfa" text-anchor="middle" font-size="9">PHASE 4</text>
+        <text x="642" y="83" fill="#a78bfa" text-anchor="middle" font-size="9">PHASE 5</text>
+        <text x="810" y="70" fill="#34d399" text-anchor="middle" font-size="9">PHASE 6</text>
+      </svg>
+      <div class="viz-caption">The default GraphRAG indexing dataflow. Only three artifacts get embedded (Phase 6) — everything else is traversed structurally.</div>
+    </div>
+
+    <div class="phase"><div class="phase-num">1</div><div class="phase-body">
+      <div class="ptitle">Compose Text Units (chunking)</div>
+      <div class="pdesc">Each document is split into <strong>Text Units</strong> — chunks of a configurable token count, <strong>1200 tokens by default</strong>. Each text unit gets a unique ID and keeps a pointer back to its source document, so every fact extracted later can be traced to its origin (provenance / "breadcrumbs"). Larger chunks process faster but give lower-fidelity extraction and less precise references.</div>
+    </div></div>
+
+    <div class="phase"><div class="phase-num">2</div><div class="phase-body">
+      <div class="ptitle">Document Processing</div>
+      <div class="pdesc">A Documents table is built that links each document to its constituent text units. This is bookkeeping for provenance — documents themselves are not used directly downstream.</div>
+    </div></div>
+
+    <div class="phase"><div class="phase-num">3</div><div class="phase-body">
+      <div class="ptitle">Graph Extraction — entities, relationships, (optional) claims</div>
+      <div class="pdesc">For <em>each</em> text unit, an LLM extracts <strong>entities</strong> (each with a <code>title</code>, <code>type</code>, <code>description</code>) and <strong>relationships</strong> (each with <code>source</code>, <code>target</code>, <code>description</code>). This produces one subgraph per text unit. The subgraphs are then <strong>merged</strong>: entities sharing the same title+type are collapsed into one node (their descriptions collected into a list); relationships sharing the same source+target are likewise collapsed. A second LLM pass — <strong>summarization</strong> — compresses each node's and edge's list of descriptions into a single concise description. Optionally, a separate pass extracts <strong>Claims (Covariates)</strong>: time-bound factual statements about entities. Claims are <strong>off by default</strong> (they need prompt tuning to be useful).</div>
+    </div></div>
+
+    <div class="phase"><div class="phase-num">4</div><div class="phase-body">
+      <div class="ptitle">Graph Augmentation — community detection</div>
+      <div class="pdesc">The merged entity-relationship graph is clustered using the <strong>Hierarchical Leiden algorithm</strong>. This recursively partitions the graph into <strong>communities</strong> (densely-connected clusters of entities) until a size threshold is reached, producing a <strong>hierarchy</strong>: level 0 = a few large communities covering the whole corpus; deeper levels = many small, tightly-scoped communities. This hierarchy is what later lets you answer questions at different "zoom levels."</div>
+    </div></div>
+
+    <div class="phase"><div class="phase-num">5</div><div class="phase-body">
+      <div class="ptitle">Community Summarization — community reports</div>
+      <div class="pdesc">For every community at every level, an LLM writes a <strong>community report</strong>: an executive summary plus the key entities, relationships, and claims inside that cluster. A top-level community yields a report about the whole dataset; a low-level community yields a report about one tight cluster. A shorthand summary of each report is also generated.</div>
+    </div></div>
+
+    <div class="phase"><div class="phase-num">6</div><div class="phase-body">
+      <div class="ptitle">Text Embedding — populate the vector stores</div>
+      <div class="pdesc">As the final step, the artifacts that need semantic search are embedded and written to a vector store. <strong>By default exactly three things are embedded:</strong> (a) entity descriptions, (b) text-unit text, (c) community-report content. Relationships and covariates are <em>not</em> embedded — they are reached by graph traversal from entities, not by vector similarity.</div>
+    </div></div>
+
+    <div class="warn">
+      <strong>Key correction to the simplified panel above:</strong> GraphRAG does <em>not</em> embed "the graph." It embeds three text artifacts derived from the graph. The graph's <em>edges</em> (relationships) are followed structurally — like SQL joins — not searched by similarity.
+    </div>
+  </div>
+
+  <!-- SECTION 2: CHUNKING & VECTORIZATION -->
+  <div class="deep-section">
+    <h3>2 · Chunking &amp; Vectorization — What Becomes a Vector, and What Doesn't</h3>
+    <div class="sub">This is the part the buyer's-guide article skips entirely. It connects GraphRAG back to the <code>chunking</code> and <code>embeddings</code> concepts already on your map.</div>
+
+    <div class="sourced">
+      Chunking in GraphRAG is the <em>same</em> chunking you already know from basic RAG: documents → fixed-size token chunks (default 1200) → each chunk is a "Text Unit." The twist is that text units serve <strong>two</strong> roles: they are (1) the input fed to the LLM for entity/relationship extraction, and (2) embedded directly so they can still be retrieved as raw passages at query time. (Source: MS GraphRAG dataflow, Phase 1 &amp; Phase 6.)
+    </div>
+
+    <div class="illus">
+      <strong>Walk the vectorization through one sentence.</strong> Suppose a text unit contains: <em>"After the March 12 outage, the Auth Service team migrated off the legacy DB cluster."</em>
+      <ul style="margin:8px 0 0 18px; font-size:0.85rem;">
+        <li><strong>As a text-unit vector:</strong> the whole sentence (within its 1200-token chunk) is embedded as-is → 1 vector in the text-unit store.</li>
+        <li><strong>As entities:</strong> the LLM pulls out <code>Auth Service</code> (type: service) and <code>legacy DB cluster</code> (type: database), each with a generated description. <em>Those descriptions</em> — not the raw sentence — are what get embedded into the entity store.</li>
+        <li><strong>As a relationship:</strong> <code>Auth Service —[migrated off]→ legacy DB cluster</code> is stored as a graph edge. It is <strong>not</strong> embedded; it's found by traversing from either entity.</li>
+      </ul>
+    </div>
+
+    <p>So the same source sentence is represented three different ways for three different retrieval mechanisms. This is the core insight behind "what's in the vector stores" — each store holds a <em>different abstraction</em> of the corpus: raw passages, distilled entity meaning, and whole-cluster themes.</p>
+  </div>
+
+  <!-- SECTION 3: THE THREE VECTOR STORES -->
+  <div class="deep-section">
+    <h3>3 · The Three Vector Stores — What Each One Holds</h3>
+    <div class="sub">You were right that there are three. In default Microsoft GraphRAG these are three collections written in Phase 6. Each indexes a different artifact and is consulted by a different query path.</div>
+
+    <div class="vstore-grid">
+      <div class="vstore-card entity">
+        <h5>① Entity Description Store</h5>
+        <div class="vmeta">default-entity-description</div>
+        <ul>
+          <li><strong>One vector per entity</strong> in the graph.</li>
+          <li>Embeds the <em>summarized description</em> of the entity (from Phase 3), not the raw text.</li>
+          <li>Vector links back to the entity node (id, title, type, degree).</li>
+        </ul>
+        <div class="used"><strong>Used as the entry point</strong> for Local Search &amp; DRIFT — "which entities does this query mention?"</div>
+      </div>
+      <div class="vstore-card textunit">
+        <h5>② Text-Unit Store</h5>
+        <div class="vmeta">default-text-unit-text</div>
+        <ul>
+          <li><strong>One vector per chunk</strong> (~1200 tokens).</li>
+          <li>Embeds the raw chunk text verbatim.</li>
+          <li>This is the "classic RAG" store — identical in spirit to a normal vector DB.</li>
+        </ul>
+        <div class="used"><strong>Supplies raw evidence passages</strong> — reached in Local Search via entity→text-unit mapping, and used directly by Basic (vanilla) Search.</div>
+      </div>
+      <div class="vstore-card community">
+        <h5>③ Community Report Store</h5>
+        <div class="vmeta">default-community-full-content</div>
+        <ul>
+          <li><strong>One vector per community report</strong>, across all hierarchy levels.</li>
+          <li>Embeds the full report content (LLM-written cluster summary).</li>
+          <li>Holds whole-theme / "big picture" abstractions.</li>
+        </ul>
+        <div class="used"><strong>The "global" store</strong> — used by DRIFT's primer phase and dynamic global search to find thematically relevant clusters.</div>
+      </div>
+    </div>
+
+    <div class="sourced">
+      "For all artifacts that require downstream vector search, we generate text embeddings… By default we embed <strong>entity descriptions, text unit text, and community report text</strong>." — Microsoft GraphRAG, Indexing Dataflow, Phase 6.
+    </div>
+
+    <div class="warn">
+      <strong>What is NOT in any vector store:</strong> relationships (edges) and covariates/claims. These carry no embedding by default — they are retrieved <em>structurally</em>, by following the graph out from entities that vector search already found. That division — vectors to <em>enter</em> the graph, edges to <em>walk</em> it — is the whole trick.
+    </div>
+  </div>
+
+  <!-- SECTION 4: QUERY ROUTING -->
+  <div class="deep-section">
+    <h3>4 · Query Routing — Entity Store vs. Community Store</h3>
+    <div class="sub">"When do we go to the community store vs. the entity store?" GraphRAG ships four query modes. The mode determines which store is hit first and how the graph is walked. Sourced from MS GraphRAG Query Engine docs.</div>
+
+    <table class="route-table">
+      <tr><th>Mode</th><th>First store hit</th><th>Mechanism</th><th>Best for</th></tr>
+      <tr>
+        <td><strong>Local Search</strong></td>
+        <td>① Entity store</td>
+        <td>Embed query → nearest <em>entities</em> → fan out via graph maps to their text units, relationships, neighbor entities, covariates, and the community reports they belong to → rank/filter to one context window.</td>
+        <td>Questions about <em>specific</em> entities ("What are chamomile's healing properties?").</td>
+      </tr>
+      <tr>
+        <td><strong>Global Search</strong></td>
+        <td>③ Community store</td>
+        <td>No vector search by default — takes <em>all</em> community reports at a chosen hierarchy level, map-reduce: each batch yields rated points (0–100), then top points are aggregated into the answer.</td>
+        <td>Whole-corpus / thematic questions ("What are the top 5 themes?").</td>
+      </tr>
+      <tr>
+        <td><strong>DRIFT Search</strong></td>
+        <td>③ then ①</td>
+        <td>Primer: match query against community reports → seed answer + follow-up questions. Then run Local Search on each follow-up. Then combine. Blends global breadth with local precision.</td>
+        <td>Complex questions needing both context and specifics.</td>
+      </tr>
+      <tr>
+        <td><strong>Basic Search</strong></td>
+        <td>② Text-unit store</td>
+        <td>Plain vector RAG: embed query → top-k nearest text-unit chunks → stuff into prompt. Provided as a baseline for comparison.</td>
+        <td>Single-passage lookups; sanity-checking vs. graph modes.</td>
+      </tr>
+    </table>
+
+    <h4>Local Search — the entity store as a doorway into the graph</h4>
+    <div class="big-viz">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" font-size="11">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+        </defs>
+        <!-- query -->
+        <rect x="10" y="125" width="110" height="48" rx="6" fill="#0d2b2e" stroke="#19CCD3" stroke-width="1.5"/>
+        <text x="65" y="146" fill="#e2e8f0" text-anchor="middle">User Query</text>
+        <text x="65" y="161" fill="#94a3b8" text-anchor="middle" font-size="9">+ conversation</text>
+        <!-- entity store match -->
+        <rect x="160" y="120" width="135" height="58" rx="6" fill="#1a2550" stroke="#6c8ef7" stroke-width="2"/>
+        <text x="227" y="140" fill="#e2e8f0" text-anchor="middle">① Entity store</text>
+        <text x="227" y="155" fill="#94a3b8" text-anchor="middle" font-size="9">embed query →</text>
+        <text x="227" y="168" fill="#94a3b8" text-anchor="middle" font-size="9">nearest entities</text>
+        <line x1="120" y1="149" x2="158" y2="149" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <!-- fan out -->
+        <text x="227" y="100" fill="#6c8ef7" text-anchor="middle" font-size="9">"access points"</text>
+        <!-- five candidate boxes -->
+        <g font-size="9">
+          <rect x="360" y="20" width="170" height="34" rx="5" fill="#3a2027" stroke="#DD8694" stroke-width="1"/>
+          <text x="370" y="35" fill="#e2e8f0">via entity→text-unit map:</text>
+          <text x="370" y="48" fill="#94a3b8">② raw text-unit passages</text>
+
+          <rect x="360" y="64" width="170" height="34" rx="5" fill="#3a2027" stroke="#DD8694" stroke-width="1"/>
+          <text x="370" y="79" fill="#e2e8f0">via entity→report map:</text>
+          <text x="370" y="92" fill="#94a3b8">③ community reports</text>
+
+          <rect x="360" y="108" width="170" height="34" rx="5" fill="#3a2027" stroke="#DD8694" stroke-width="1"/>
+          <text x="370" y="123" fill="#e2e8f0">via edges:</text>
+          <text x="370" y="136" fill="#94a3b8">neighbor entities</text>
+
+          <rect x="360" y="152" width="170" height="34" rx="5" fill="#3a2027" stroke="#DD8694" stroke-width="1"/>
+          <text x="370" y="167" fill="#e2e8f0">via edges:</text>
+          <text x="370" y="180" fill="#94a3b8">relationships</text>
+
+          <rect x="360" y="196" width="170" height="34" rx="5" fill="#2d2010" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="370" y="211" fill="#e2e8f0">via entity→covariate map:</text>
+          <text x="370" y="224" fill="#94a3b8">claims (if enabled)</text>
+        </g>
+        <!-- arrows from entity store to fan out -->
+        <line x1="295" y1="140" x2="358" y2="37" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr2)"/>
+        <line x1="295" y1="145" x2="358" y2="81" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr2)"/>
+        <line x1="295" y1="149" x2="358" y2="125" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr2)"/>
+        <line x1="295" y1="153" x2="358" y2="169" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr2)"/>
+        <line x1="295" y1="158" x2="358" y2="213" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr2)"/>
+        <!-- rank/filter -->
+        <rect x="575" y="95" width="120" height="60" rx="6" fill="#3d2a0a" stroke="#F19914" stroke-width="1.5"/>
+        <text x="635" y="120" fill="#e2e8f0" text-anchor="middle">Rank +</text>
+        <text x="635" y="135" fill="#e2e8f0" text-anchor="middle">Filter</text>
+        <text x="635" y="150" fill="#94a3b8" text-anchor="middle" font-size="8">fit 1 context window</text>
+        <line x1="530" y1="125" x2="573" y2="125" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <!-- answer -->
+        <rect x="745" y="100" width="120" height="50" rx="6" fill="#2a1840" stroke="#B356CD" stroke-width="2"/>
+        <text x="805" y="129" fill="#e2e8f0" text-anchor="middle">LLM Answer</text>
+        <line x1="695" y1="125" x2="743" y2="125" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr2)"/>
+      </svg>
+      <div class="viz-caption">Local Search: vector search hits the <strong>entity store once</strong> to find access points, then the rest is graph traversal — pulling in text units, reports, neighbors, edges and claims, all ranked to fit one context window. (Recreated from the MS Local Search dataflow.)</div>
+    </div>
+
+    <h4>Global Search — the community store, no entity lookup at all</h4>
+    <div class="big-viz">
+      <svg viewBox="0 0 880 230" xmlns="http://www.w3.org/2000/svg" font-size="11">
+        <defs><marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker></defs>
+        <rect x="10" y="95" width="110" height="48" rx="6" fill="#0d2b2e" stroke="#19CCD3" stroke-width="1.5"/>
+        <text x="65" y="123" fill="#e2e8f0" text-anchor="middle">User Query</text>
+        <!-- community reports at level L -->
+        <rect x="160" y="70" width="150" height="100" rx="6" fill="#241a3d" stroke="#a78bfa" stroke-width="2"/>
+        <text x="235" y="90" fill="#e2e8f0" text-anchor="middle" font-size="10">③ ALL community</text>
+        <text x="235" y="104" fill="#e2e8f0" text-anchor="middle" font-size="10">reports at level L</text>
+        <text x="235" y="124" fill="#94a3b8" text-anchor="middle" font-size="9">(no vector search —</text>
+        <text x="235" y="136" fill="#94a3b8" text-anchor="middle" font-size="9">you pick the level)</text>
+        <text x="235" y="156" fill="#a78bfa" text-anchor="middle" font-size="9">shuffled into batches</text>
+        <line x1="120" y1="119" x2="158" y2="119" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr3)"/>
+        <!-- map -->
+        <g font-size="9">
+          <rect x="360" y="40" width="150" height="34" rx="5" fill="#3a2027" stroke="#DD8694"/>
+          <text x="435" y="55" fill="#e2e8f0" text-anchor="middle">MAP: batch 1 → points</text>
+          <text x="435" y="67" fill="#94a3b8" text-anchor="middle">each rated 0–100</text>
+          <rect x="360" y="84" width="150" height="34" rx="5" fill="#3a2027" stroke="#DD8694"/>
+          <text x="435" y="99" fill="#e2e8f0" text-anchor="middle">MAP: batch 2 → points</text>
+          <text x="435" y="111" fill="#94a3b8" text-anchor="middle">each rated 0–100</text>
+          <rect x="360" y="128" width="150" height="34" rx="5" fill="#3a2027" stroke="#DD8694"/>
+          <text x="435" y="143" fill="#e2e8f0" text-anchor="middle">MAP: batch N → points</text>
+          <text x="435" y="155" fill="#94a3b8" text-anchor="middle">each rated 0–100</text>
+        </g>
+        <line x1="310" y1="105" x2="358" y2="57" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="310" y1="119" x2="358" y2="101" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="310" y1="133" x2="358" y2="145" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr3)"/>
+        <!-- reduce -->
+        <rect x="560" y="84" width="130" height="50" rx="6" fill="#3d2a0a" stroke="#F19914" stroke-width="1.5"/>
+        <text x="625" y="104" fill="#e2e8f0" text-anchor="middle">REDUCE</text>
+        <text x="625" y="120" fill="#94a3b8" text-anchor="middle" font-size="8">keep top-rated points</text>
+        <line x1="510" y1="100" x2="558" y2="105" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr3)"/>
+        <line x1="510" y1="145" x2="558" y2="115" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr3)"/>
+        <rect x="730" y="84" width="120" height="50" rx="6" fill="#2a1840" stroke="#B356CD" stroke-width="2"/>
+        <text x="790" y="113" fill="#e2e8f0" text-anchor="middle">LLM Answer</text>
+        <line x1="690" y1="109" x2="728" y2="109" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr3)"/>
+      </svg>
+      <div class="viz-caption">Global Search: skips entity lookup entirely. It map-reduces over <strong>community reports</strong> at a hierarchy level you choose — lower levels = more detail but more cost. (Recreated from the MS Global Search dataflow.)</div>
+    </div>
+
+    <h4>Worked routing examples — same corpus, three questions</h4>
+    <div class="example-box">
+      <div class="q">"What are the healing properties of chamomile?"</div>
+      <ol>
+        <li><strong>Route → Local.</strong> The question names a specific entity (<code>chamomile</code>).</li>
+        <li>Query embedded → matched against the <strong>entity store ①</strong> → finds the <code>chamomile</code> node.</li>
+        <li>Fan out: its text units (② raw passages mentioning chamomile), its relationships (<code>chamomile —[treats]→ insomnia</code>), neighbor entities, and the community reports it belongs to (③).</li>
+        <li>Rank, fit one context window, generate. <em>Entity store leads; community store is only a supporting input.</em></li>
+      </ol>
+    </div>
+    <div class="example-box">
+      <div class="q">"What are the top 5 recurring themes across all these herbal notes?"</div>
+      <ol>
+        <li><strong>Route → Global.</strong> "Across all" = whole-corpus synthesis; no single entity to anchor on.</li>
+        <li>Skip the entity store entirely. Take <strong>all community reports ③</strong> at a chosen level.</li>
+        <li>Map: each batch of reports → rated candidate themes. Reduce: keep the highest-rated → final answer.</li>
+        <li><em>Community store is the whole show; entity store is never touched.</em></li>
+      </ol>
+    </div>
+    <div class="example-box">
+      <div class="q">"How did the chamomile supply shortage affect the products that depend on it?"</div>
+      <ol>
+        <li><strong>Route → DRIFT.</strong> Needs broad context (what's the shortage about) <em>and</em> specific multi-hop chains (which products, which dependencies).</li>
+        <li>Primer: match query against <strong>community reports ③</strong> → seed answer + follow-up questions.</li>
+        <li>Follow-ups run as <strong>Local searches</strong> off the <strong>entity store ①</strong>, walking <code>chamomile →[ingredient-of]→ product</code> edges.</li>
+        <li>Combine global framing with local specifics into the final answer.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- SECTION 5: COST & TRADEOFFS -->
+  <div class="deep-section">
+    <h3>5 · Why This Is Expensive — and When It's Worth It</h3>
+    <div class="sub">Ties the mechanism back to the buyer's-guide framing in the left panel.</div>
+    <p>Every phase 3–5 step is an <strong>LLM call per text unit or per community</strong>: extraction, description summarization, and one report per community at every hierarchy level. A corpus that costs cents to index for basic RAG can cost orders of magnitude more for GraphRAG, because you are paying an LLM to read everything several times during indexing. That is the indexing-cost line in the comparison table above made concrete.</p>
+    <p>The payoff is at query time: multi-hop and whole-corpus questions that basic RAG simply cannot answer become tractable, because the expensive reasoning was <strong>front-loaded into the index</strong> (entities, edges, and pre-written community summaries) instead of being attempted on-the-fly from a handful of similar chunks. The practical 2026 guidance from the source article holds: use GraphRAG where the answer <em>is a relationship</em> or <em>a theme</em>, and keep plain vector RAG for single-passage lookups.</p>
+  </div>
+
+</div>
+
+<footer>
+  Deep dive generated 2026-06-23 · expanded with technical internals 2026-06-24 · AI Retrieval subject · Concepts introduced: knowledge-graphs, graph-rag<br>
+  Primary source: <a href="https://medium.com/@tongbing00/graphrag-in-2026-a-practical-buyers-guide-to-knowledge-graph-augmented-rag-43e5e72d522d" style="color:var(--accent)">Tongbing, Medium, Jan 2026</a><br>
+  Technical grounding: <a href="https://microsoft.github.io/graphrag/index/default_dataflow/" style="color:var(--accent)">MS GraphRAG — Indexing Dataflow</a> ·
+  <a href="https://microsoft.github.io/graphrag/query/overview/" style="color:var(--accent)">Query Engine Overview</a> ·
+  <a href="https://microsoft.github.io/graphrag/query/local_search/" style="color:var(--accent)">Local Search</a> ·
+  <a href="https://microsoft.github.io/graphrag/query/global_search/" style="color:var(--accent)">Global Search</a> ·
+  <a href="https://www.microsoft.com/en-us/research/blog/introducing-drift-search-combining-global-and-local-search-methods-to-improve-quality-and-efficiency/" style="color:var(--accent)">DRIFT Search (MS Research)</a> ·
+  <a href="https://arxiv.org/html/2410.05779v1" style="color:var(--accent)">LightRAG paper</a>
+</footer>
+
+<script>
+const annotations = {
+  'rag-wall': `
+    <div class="concept-title">Why Standard RAG Hits a Wall</div>
+    <div class="sourced">
+      Standard RAG embeds text chunks, runs ANN (approximate nearest-neighbor) search, and stitches retrieved passages into a prompt. It excels when one passage answers the question. It fails when the answer requires <strong>multi-hop reasoning</strong> across entities, cross-document synthesis, or understanding a global pattern across a corpus. (Source: article §"Why GraphRAG" + MS GraphRAG overview)
+    </div>
+    <div class="illus">
+      <strong>Concrete example:</strong> "Which microservices were affected by the outage on March 12?" The answer may live across five incident tickets, a runbook, and a service dependency map — none of which is the "most similar" passage to the query. Embedding similarity finds individual chunks; it can't chain the dependency graph. That's the gap GraphRAG fills.
+    </div>
+    <div class="rubric">
+      <div class="rubric-title">Why this sentence matters</div>
+      <ul>
+        <li>"Retrieval alone isn't reasoning" is the thesis of the whole article — and of the GraphRAG research programme.</li>
+        <li>Cosine similarity is a <em>proximity</em> metric: finds passages close to the query. It is not a <em>traversal</em> mechanism: can't follow A→B→C chains.</li>
+        <li>This limitation is structural, not a tuning problem. GraphRAG's graph + community layer is the proposed fix.</li>
+      </ul>
+    </div>`,
+
+  'knowledge-graphs': `
+    <div class="concept-title">What is a Knowledge Graph?</div>
+    <div class="sourced">
+      A knowledge graph stores <strong>entities</strong> (things: people, places, products, concepts) and typed <strong>relationships</strong> between them. Nodes are entities; edges are labeled connections. Examples: "Aspirin —[treats]→ Headache", "PostgreSQL —[is-a]→ Database", "Alice —[manages]→ Team-X".
+    </div>
+    <div class="illus">
+      Think of a knowledge graph as a structured rumour network. Plain text says "Alice manages Team X, which uses PostgreSQL." A KG extracts those facts into explicit nodes and edges — Alice→manages→Team-X, Team-X→uses→PostgreSQL — so a system can traverse the chain directly instead of hoping the right paragraph turns up in a search.
+    </div>
+    <div class="rubric">
+      <div class="rubric-title">Brief history</div>
+      <ul>
+        <li><strong>1970s–1990s:</strong> Semantic networks in AI research; expert systems encode knowledge as node-edge graphs.</li>
+        <li><strong>2012:</strong> Google's "Knowledge Graph" — billions of entities powering search info cards. Freebase, Wikidata follow.</li>
+        <li><strong>2024:</strong> MS GraphRAG paper: entities are now <em>extracted from unstructured text by an LLM</em>, making KGs viable for private corpora.</li>
+      </ul>
+    </div>
+    <div class="rubric">
+      <div class="rubric-title">Map rubric: knowledge-graphs</div>
+      <ul>
+        <li>A knowledge graph stores entities and typed relationships</li>
+        <li>Relationships capture structure that flat text leaves implicit</li>
+      </ul>
+    </div>`,
+
+  'multi-hop': `
+    <div class="concept-title">Multi-hop Queries: The Mechanism</div>
+    <div class="sourced">
+      A multi-hop query requires chaining ≥ 2 facts from different nodes to reach the answer. Each "hop" crosses one relationship edge. Standard RAG's ANN search ranks passages by similarity to the query — it cannot follow edges. Multi-hop resolution requires graph traversal. (Source: EcphoryRAG paper; MS GraphRAG Local Search docs.)
+    </div>
+    <div class="illus">
+      <strong>Two-hop example:</strong> "Which database is used by the service Auth Service depends on?"<br>
+      Hop 1: Auth Service —[depends-on]→ Payment Service<br>
+      Hop 2: Payment Service —[uses]→ PostgreSQL Cluster<br><br>
+      No single chunk contains this chain. A chunk about "Payment Service uses PostgreSQL" is not semantically similar to "Auth Service dependencies" — so vector search won't retrieve it. Only graph traversal follows the edge sequence.
+    </div>`,
+
+  'global-queries': `
+    <div class="concept-title">Global Thematic Questions</div>
+    <div class="sourced">
+      A global query asks about patterns or themes across the <em>entire corpus</em>, not about any one entity: "What are the top recurring failure modes?", "Summarise the research themes in these 500 papers?" Standard RAG's top-k retrieval returns a small locally-similar window — it can't synthesise corpus-wide patterns. GraphRAG's community hierarchy pre-computes these summaries at index time. (Source: MS GraphRAG Global Search docs.)
+    </div>
+    <div class="illus">
+      Global Search mechanism: take <em>all</em> community reports at a chosen hierarchy level → shuffle into batches → LLM map-reduce (each batch → rated candidate points 0–100) → keep top-rated points → generate answer. No vector search at all — the community summaries already did the synthesis.
+    </div>`,
+
+  'ms-graphrag': `
+    <div class="concept-title">Microsoft GraphRAG — Background</div>
+    <div class="sourced">
+      Microsoft Research published the GraphRAG paper in April 2024, releasing an open-source Python package. It builds on the idea that LLMs can extract a knowledge graph from arbitrary text, and that graph + community hierarchy enables better answers to both focused and global questions over private corpora. (Source: <a href="https://microsoft.github.io/graphrag/index/default_dataflow/" style="color:var(--accent)" target="_blank">MS GraphRAG Indexing Docs</a>.)
+    </div>
+    <div class="rubric">
+      <div class="rubric-title">Timeline: Knowledge Graphs → GraphRAG</div>
+      <ul>
+        <li><strong>1970s–1990s:</strong> Semantic networks; expert systems encode facts as graphs.</li>
+        <li><strong>2012:</strong> Google's Knowledge Graph; Freebase, Wikidata. KGs = large curated databases.</li>
+        <li><strong>2020–2023:</strong> LLMs + RAG emerge. Standard vector-search RAG dominates. KGs treated as separate systems.</li>
+        <li><strong>2024:</strong> MS Research publishes GraphRAG; LightRAG (HKU) released; "retrieval isn't reasoning" ceiling recognized.</li>
+        <li><strong>2026:</strong> GraphRAG enters enterprise evaluation. Multiple vendors offer productized stacks. Indexing cost and extraction quality remain open problems.</li>
+      </ul>
+    </div>`,
+
+  'local-global': `
+    <div class="concept-title">Local vs. Global Search</div>
+    <div class="sourced">
+      <strong>Local Search:</strong> embed query → match entity store → fan out via graph edges to text units, relationships, neighbor entities, community reports → rank to fit one context window. Best for entity-specific questions.<br><br>
+      <strong>Global Search:</strong> no vector search. Take <em>all</em> community reports at a chosen hierarchy level → map-reduce: each batch yields rated points → keep top → answer. Best for whole-corpus themes.
+    </div>
+    <table class="comparison-table" style="margin-top:12px">
+      <tr><th>Query Type</th><th>Standard RAG</th><th>GraphRAG</th></tr>
+      <tr><td>Single-fact lookup</td><td>✅ Excellent</td><td>Overkill</td></tr>
+      <tr><td>Multi-hop ("A affects B via C")</td><td>❌ Struggles</td><td>✅ Strong</td></tr>
+      <tr><td>Global themes across corpus</td><td>❌ Miss</td><td>✅ Community summaries</td></tr>
+      <tr><td>Indexing cost</td><td>Low</td><td>High (extraction + graph build)</td></tr>
+    </table>
+    <div class="rubric">
+      <div class="rubric-title">Map rubric: graph-rag</div>
+      <ul>
+        <li>GraphRAG retrieves over connected entities, not just nearby passages</li>
+        <li>Graph structure helps multi-hop and whole-corpus questions</li>
+        <li>It complements, rather than replaces, vector retrieval</li>
+      </ul>
+    </div>
+    <div class="warn">
+      <strong>Prerequisite note:</strong> graph-rag (tier 5) requires <code>basic-rag</code> and <code>knowledge-graphs</code> as hard prereqs. This dive introduces <code>knowledge-graphs</code> (now: encountered). Full mastery of graph-rag comes after the RAG pipeline is understood.
+    </div>`,
+
+  'pagerank': `
+    <div class="concept-title">Personalized PageRank in Graph Traversal</div>
+    <div class="sourced">
+      PageRank (Larry Page, 1996) originally scored web pages by how many other pages link to them, weighted by the linkers' importance — modelled as a random walk with restart probability α ≈ 0.15. <strong>Personalized PageRank (PPR)</strong> biases the walk toward a set of "seed nodes" — in fast-graphrag's case, the entities matched to the query. The result is a relevance score for every node relative to those seeds, without enumerating all paths. (Source: fast-graphrag repo; Andersen et al., FOCS 2006.)
+    </div>
+    <div class="illus">
+      PPR in practice: given a query, find seed entities → biased random walk: at each step either follow an edge or teleport back to a seed (probability α). After convergence, nodes with high PPR scores are strongly connected to the seeds. Those nodes become the LLM context — graph relevance without explicit path enumeration.
+    </div>`,
+
+  'benchmarks': `
+    <div class="concept-title">Reading Research Benchmarks Carefully</div>
+    <div class="sourced">
+      EcphoryRAG reports Exact Match (EM) improving from 0.392 to 0.474 on multi-hop QA datasets — a ~21% relative gain. EM measures the fraction of predictions that exactly match the reference answer string; it is a strict, conservative metric. (Source: EcphoryRAG paper, self-reported evaluation.)
+    </div>
+    <div class="warn">
+      <strong>Three caveats:</strong><br>
+      (1) Self-reported benchmarks are evaluated by the authors on their chosen datasets — independent replication often shows smaller gains.<br>
+      (2) "Over selected KG-RAG baselines" means they chose their own comparison set; the gap may shift against a different baseline.<br>
+      (3) EM on curated multi-hop QA is a narrow proxy. Production performance on open-domain enterprise knowledge bases is a harder, different problem.
+    </div>`
+};
+
+document.querySelectorAll('.highlight').forEach(el => {
+  el.addEventListener('click', function() {
+    const annId = this.dataset.ann;
+    const body = document.getElementById('ann-body');
+    if (!annotations[annId]) return;
+    body.innerHTML = annotations[annId];
+    document.querySelectorAll('.highlight').forEach(h => h.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

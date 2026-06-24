@@ -95,14 +95,39 @@ For each subject, determine its **mode**:
 4. Flag anything that suggests the map needs a new concept (gardener candidate).
 
 ### `deep dive <n>` — enrich one item
-1. Web-search to **ground** the explanation in real, citable sources. Fetch the original article's full text where possible.
-2. Produce a **single interactive HTML artifact** in `<subject>/deep-dives/` that contains, in order:
-   a. **The original article** — full text or a faithful excerpt, clearly attributed with title, author, publication, and URL. If the full text can't be fetched, use a close paraphrase with all claims sourced.
-   b. **Contextualized learning** — covering the history, background concepts, and the *mechanism beneath* the thing. Inline annotations or a side-by-side panel can link specific claims in the article to the deeper explanation.
+1. Web-search to **ground** the explanation in real, citable sources. **Go past the originating article** — fetch the primary/authoritative sources behind it (official docs, the actual paper, reference implementations). The originating article is the entry point, not the ceiling. Fetch full text where possible.
+2. Produce a **single interactive HTML artifact** in `<subject>/deep-dives/`. Name the file `YYYY-MM-DD-<topic-slug>.html` where the slug is a short kebab-case description of the article topic — not the concept IDs, since a dive can span multiple (e.g. `2026-06-22-hybrid-search-bm25-still-wins.html`). The file must open with:
+   - A **page header**: a small meta line (`[Subject] · Deep Dive · [date]`), a large `h1` with the article title, and a byline with the linked primary source — article title as a hyperlink, author, publication, and date.
+   - A **concepts bar** (a separate strip directly below the header): one flat pill per concept the dive touches; mark genuinely new concepts with a `✦ new` suffix, leave known ones plain.
+
+   Below those, the file must contain two sections:
+
+   **Section 1 — Annotated Article (two-column, inline-annotation layout)**
+   A split-screen reading view. The **left column** contains the original article — full text or a faithful excerpt, clearly attributed with title, author, publication, and URL (if the full text can't be fetched, use a close paraphrase with all claims sourced). The **right column** is an annotation panel that starts empty. Key passages in the article that introduce or rely on an important concept are marked with a subtle highlight; clicking a highlighted passage populates the right column with a focused explanation of that concept — its history, the mechanism beneath it, and why it matters *in context of that sentence*. Only one annotation is visible at a time (clicking a new passage replaces the previous one). The article is primary; the side panel explains without interrupting the read.
+
+   **Section 2 — Under the Hood deep dive**
+   The full mechanistic deep dive — see the depth bar below. This is mandatory, not optional. (For a technical subject this is the internals; for a natural, economic, or physical subject it's the underlying mechanism — same bar, different vocabulary.)
 3. Keep the line between *sourced truth* (from the article and cited references) and *simplified illustration* (your generated model) visible throughout.
 4. **Update progress:** for every concept the dive covers, if its state is `unseen`, set it to `encountered` and update `last_reviewed`. Do not downgrade concepts already at `understood` or `shaky`.
 5. **Append an entry to `<subject>/deep-dives/index.yaml`** (create the file if it doesn't exist) using the format below.
 6. Offer to **keep** it → mint recall cards, then flip `cards_minted: true` in the index entry.
+
+**Depth bar for Section 2 (non-negotiable):**
+Section 2 must explain the topic *end to end at the mechanism level*, the way an expert would whiteboard it for a sharp colleague — not a summary of the article, but the underlying machinery behind it. Default to too much detail rather than too little. The principles below are **subject-agnostic**; each lists how it lands in different domains, but the bar is the same. Cover every principle the topic supports:
+
+- **The whole process, end to end.** Walk every stage of however the thing works or unfolds — what each stage takes in, what it produces, and the concrete quantities/defaults that govern it (real numbers, units, thresholds, parameters). *Software:* the pipeline phase by phase. *Physical/biological:* the cycle or lifecycle (a nutrient cycle, an energy-conversion chain, a circuit's current path). *Economic/financial:* the flow from inputs to outcome (how a tariff propagates to prices; how cash flows discount to a valuation).
+
+- **The parts, and what each one is, holds, and is NOT.** Enumerate the components and define each precisely — what's in it, what derives it, and the negative space (what it is *not*, which is often the clarifying detail). *Software:* the stores/tables/indexes/layers and their fields. *Biological:* the organisms, soil horizons, or organs and their roles. *Economic:* the actors, instruments, and flows. *Physical:* the bodies, fields, or components. Name the real artifacts where the sources give them.
+
+- **The mechanics the surface description hides.** Answer the "but how does it *actually*…" questions a sharp reader raises. *Software:* how is the input chunked, what gets vectorized vs. stored structurally, how is a request routed and when is one path chosen over another. *Other domains:* why does this step happen at all, what force/incentive/reaction drives it, what would change the outcome. Go one level below the obvious explanation.
+
+- **At least one fully worked concrete example**, traced all the way through the mechanism — a real input/question/scenario followed step by step, naming which component or stage is engaged at each step and what it produces.
+
+- **Cost / tradeoff / failure-mode analysis** — why is it expensive or slow or fragile, when does it break, and when is the simpler alternative actually the right choice.
+
+- **Multiple visuals (aim for 3+).** A deep dive should be visually rich. Use SVG diagrams for the end-to-end process, the layout of the parts (what each component holds/does), and the decision/flow logic. Add comparison tables and timelines where they fit. Diagrams must be specific to *this* mechanism (real names, real arrows, real quantities), not generic boxes. Validate that every SVG is well-formed XML and all `<div>` tags balance before finishing.
+
+If a principle genuinely doesn't apply to the topic, say so briefly rather than padding — but the bar is "exhaustive and mechanistic," and the common failure is stopping too shallow. When in doubt, go deeper and add another diagram.
 
 ### `learn <subject>` (or `next`) — the depth loop
 **If no subject is given (`next`):** pick the subject with the most `encountered` concepts (deepest in-progress work). Break ties by the subject with the most frontier concepts. Break further ties by the order subjects appear in `index.yaml`.

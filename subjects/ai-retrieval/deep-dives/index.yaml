@@ -26,6 +26,15 @@ deep_dives:
     cards_minted: false
     summary: "Context cliff at ~2,500 tokens; overlap myth debunked; 8 chunking strategies compared with benchmarks."
 
+  - id: graphrag-knowledge-graphs-2026
+    file: deep-dives/graphrag-knowledge-graphs-2026.html
+    generated: 2026-06-23
+    source_url: https://medium.com/@tongbing00/graphrag-in-2026-a-practical-buyers-guide-to-knowledge-graph-augmented-rag-43e5e72d522d
+    source_title: "GraphRAG in 2026: A Practical Buyer's Guide to Knowledge-Graph–Augmented RAG"
+    concepts: [knowledge-graphs, graph-rag]
+    cards_minted: false
+    summary: "Why standard RAG plateaus on multi-hop queries; knowledge graphs as entities+relationships; full 6-phase MS indexing pipeline (chunking→extraction→Leiden communities→reports→embedding); the three default vector stores (entity-description, text-unit, community-report) and what each holds; query routing across local/global/DRIFT/basic search with worked examples; 2026 landscape (Microsoft, LightRAG, fast-graphrag)."
+
   - id: hnsw-vector-similarity
     file: deep-dives/hnsw-vector-similarity.html
     generated: 2026-06-23

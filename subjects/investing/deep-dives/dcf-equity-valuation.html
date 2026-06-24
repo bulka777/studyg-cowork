@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: DCF & Equity Valuation</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222638;
+    --accent: #10b981;
+    --accent2: #34d399;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #2d3556;
+    --sourced: #1e3a2f;
+    --sourced-border: #34d399;
+    --illus: #1e2a3d;
+    --illus-border: #60a5fa;
+    --warn: #2d2010;
+    --warn-border: #f59e0b;
+    --shaky: #2d1515;
+    --shaky-border: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Georgia', serif; font-size: 16px; line-height: 1.7; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; }
+  .header-meta { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+  header .byline { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
+  header .byline a { color: var(--accent); }
+
+  .concepts-bar { background: var(--surface2); padding: 12px 32px; display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .concept-tag { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.5px; font-family: monospace; }
+  .concept-tag.shaky { background: #7f1d1d; border: 1px solid var(--shaky-border); }
+  .concept-tag.known { background: #374151; color: var(--text-muted); }
+
+  .shaky-banner { background: var(--shaky); border: 1px solid var(--shaky-border); border-radius: 8px; padding: 14px 20px; margin: 20px 32px; font-size: 0.9rem; }
+  .shaky-banner strong { color: #fca5a5; }
+
+  .layout { max-width: 1200px; margin: 0 auto; padding: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-header { background: var(--surface2); padding: 14px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); border-bottom: 1px solid var(--border); }
+  .panel-body { padding: 20px; }
+
+  .article-text { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
+  .article-text h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 20px 0 8px; }
+  .article-text h3 { font-size: 1rem; font-weight: 700; color: var(--accent2); margin: 16px 0 6px; }
+  .article-text p { margin-bottom: 12px; }
+  .article-text ul, .article-text ol { margin: 8px 0 12px 20px; }
+  .article-text li { margin-bottom: 6px; }
+  .article-text strong { color: #6ee7b7; }
+  .article-text em { color: var(--text-muted); }
+  .article-text code { background: var(--surface2); padding: 2px 6px; border-radius: 3px; font-size: 0.88em; color: var(--accent2); }
+
+  .sourced { background: var(--sourced); border-left: 3px solid var(--sourced-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .sourced::before { content: "📄 SOURCED TRUTH"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--sourced-border); margin-bottom: 6px; }
+
+  .illus { background: var(--illus); border-left: 3px solid var(--illus-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .illus::before { content: "💡 ILLUSTRATION / MODEL"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--illus-border); margin-bottom: 6px; }
+
+  .warn { background: var(--warn); border-left: 3px solid var(--warn-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .warn::before { content: "⚠ COMMON MISTAKE"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--warn-border); margin-bottom: 6px; }
+
+  .concept-section { margin-bottom: 28px; }
+  .concept-title { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .concept-title::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); }
+
+  .rubric { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-top: 12px; }
+  .rubric-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .rubric ul { margin-left: 16px; }
+  .rubric li { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+  .rubric li::marker { color: var(--accent); }
+
+  .formula-box { background: var(--surface2); border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin: 14px 0; text-align: center; }
+  .formula { font-family: monospace; font-size: 1rem; color: var(--accent2); margin: 8px 0; }
+  .formula-label { font-size: 11px; color: var(--text-muted); }
+
+  .step-flow { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+  .step { display: flex; gap: 12px; align-items: flex-start; }
+  .step-num { background: var(--accent); color: #fff; font-weight: 700; font-size: 12px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .step-content { font-size: 0.88rem; flex: 1; }
+  .step-title { font-weight: 700; color: var(--accent2); margin-bottom: 2px; }
+
+  .example-box { background: #0d2018; border: 1px solid var(--accent); border-radius: 8px; padding: 16px; margin: 14px 0; font-size: 0.88rem; }
+  .example-box::before { content: "📊 WORKED EXAMPLE"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--accent); margin-bottom: 10px; }
+  .ex-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .ex-row:last-child { border-bottom: none; font-weight: 700; color: var(--accent); }
+  .ex-label { color: var(--text-muted); }
+  .ex-val { color: var(--text); font-family: monospace; }
+
+  footer { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-meta">Investing · Deep Dive · 2026-06-23</div>
+  <h1>DCF & Equity Valuation: Stock Price as Present Value of Future Cash Flows</h1>
+  <div class="byline">
+    Primary source: <a href="https://site.financialmodelingprep.com/discounted-cash-flow-blogs/walk-me-through-a-dcf-a-simple-guide-to-discounted-cash-flow-valuation" target="_blank">"Walk Me Through a DCF: A Simple Guide to Discounted Cash Flow Valuation"</a>
+    · Sanzhi Kobzhan · Financial Modeling Prep · Updated Nov 19, 2025<br>
+    Supporting: <a href="https://online.hbs.edu/blog/post/discounted-cash-flow" target="_blank">HBS DCF explainer</a> ·
+    <a href="https://www.cfainstitute.org/insights/professional-learning/refresher-readings/2026/free-cash-flow-valuation" target="_blank">CFA Institute Free Cash Flow Valuation (2026)</a>
+  </div>
+</header>
+
+<div class="concepts-bar">
+  <span class="concept-tag shaky">equity-valuation ⚠ shaky</span>
+  <span class="concept-tag known">money-time-value (understood)</span>
+  <span class="concept-tag known">equities (understood)</span>
+  <span class="concept-tag known">risk-return (understood)</span>
+</div>
+
+<div class="shaky-banner">
+  <strong>⚠ Addressing a known gap:</strong> This concept is marked <code>shaky</code> with the recorded misconception: "Knows price-to-earnings intuition but missing the DCF mechanism: <strong>stock price = PV of future cash flows discounted to today.</strong>" This deep dive is targeted directly at that gap.
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Original Article -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">📰 Original Article — Faithful Summary</div>
+      <div class="panel-body article-text">
+
+        <p><em>Attribution: "Walk Me Through a DCF: A Simple Guide to Discounted Cash Flow Valuation" by Sanzhi Kobzhan, Financial Modeling Prep, updated November 19, 2025. Full article at <a href="https://site.financialmodelingprep.com/discounted-cash-flow-blogs/walk-me-through-a-dcf-a-simple-guide-to-discounted-cash-flow-valuation" style="color:var(--accent)" target="_blank">financialmodelingprep.com</a>.</em></p>
+
+        <p>A DCF (Discounted Cash Flow) estimates a company's fair value based on the money it might generate in the future. By <strong>discounting these future cash flows back to today</strong>, we can see if the stock price is trading above or below its fundamental worth. If the current market price is lower than the DCF-derived price, it could be undervalued.</p>
+
+        <h2>Step 1: Forecast the Free Cash Flows (FCF)</h2>
+        <p>Project Free Cash Flows for typically 5–10 years. FCF is the cash left over after all business costs — operating expenses, taxes, and capital expenditures — are covered. It's the cash truly available to investors.</p>
+        <ul>
+          <li>Identify Revenue and Growth: estimate sales from past performance and future outlook</li>
+          <li>Deduct Operating Costs and Taxes: arrive at EBIT, then tax-effect it</li>
+          <li>Adjust for Depreciation, Amortization, and CapEx</li>
+          <li>Consider Working Capital Changes (receivables, payables, inventories)</li>
+        </ul>
+
+        <h2>Step 2: Determine the Discount Rate (WACC)</h2>
+        <p>The discount rate, often the <strong>Weighted Average Cost of Capital (WACC)</strong>, represents how much return investors expect for the risk of investing in this company. Components:</p>
+        <ul>
+          <li><strong>Cost of Equity:</strong> derived using CAPM (risk-free rate + beta × market risk premium)</li>
+          <li><strong>Cost of Debt:</strong> the interest rate on loans/bonds, adjusted for taxes</li>
+          <li><strong>Capital Structure Weights:</strong> debt vs. equity proportion</li>
+        </ul>
+
+        <h2>Step 3: Calculate the Terminal Value</h2>
+        <p>Companies don't vanish after the forecast period. The Terminal Value (TV) captures all cash flows beyond year 5–10, typically using the <strong>perpetuity growth approach</strong>:</p>
+        <p style="font-family:monospace; background:var(--surface2); padding:8px 12px; border-radius:4px; font-size:0.9rem;">
+          TV = (Final Year FCF × (1 + g)) / (WACC − g)
+        </p>
+        <p>where <em>g</em> is the long-term growth rate (typically 2–4%). Terminal value often represents <strong>60–80% of total DCF valuation</strong> — it dominates.</p>
+
+        <h2>Step 4: Discount All Cash Flows to Present Value</h2>
+        <p>Discount each year's FCF plus the Terminal Value back to today:</p>
+        <p style="font-family:monospace; background:var(--surface2); padding:8px 12px; border-radius:4px; font-size:0.9rem;">
+          PV = FCF_n / (1 + WACC)^n
+        </p>
+        <p>Sum of all discounted amounts = <strong>Enterprise Value (EV)</strong>.</p>
+
+        <h2>Step 5: Get to Equity Value Per Share</h2>
+        <p>Convert Enterprise Value to what's available to shareholders:</p>
+        <p style="font-family:monospace; background:var(--surface2); padding:8px 12px; border-radius:4px; font-size:0.9rem;">
+          Equity Value = EV − Net Debt<br>
+          Fair Value Per Share = Equity Value ÷ Shares Outstanding
+        </p>
+
+        <h2>Common DCF Mistakes</h2>
+        <ol>
+          <li><strong>Unrealistic growth rates</strong> — small changes in g or WACC swing valuation enormously</li>
+          <li><strong>Ignoring terminal value sensitivity</strong> — it's 60–80% of the answer; test it</li>
+          <li><strong>Mixing FCFF and FCFE</strong> — FCFF = cash to all capital providers; FCFE = only to equity holders</li>
+          <li><strong>Forgetting the business story</strong> — DCF is parameterized by judgment about the future</li>
+          <li><strong>No sensitivity analysis</strong> — always test what happens if WACC +1% or g −0.5%</li>
+        </ol>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Learning Context -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">🧠 Contextualized Learning</div>
+      <div class="panel-body">
+
+        <div class="concept-section">
+          <div class="concept-title">The Core Insight: Stock = PV of Future Cash Flows</div>
+
+          <div class="sourced">
+            The fundamental claim of DCF valuation: a stock's intrinsic value equals the <strong>present value of all future cash flows</strong> it is expected to generate, discounted at a rate reflecting the opportunity cost and risk of holding it. If the market price is below this value, the stock is undervalued; above it, overvalued. (Source: FMP article; consistent with CFA Institute valuation framework)
+          </div>
+
+          <div class="illus">
+            You already know (from money-time-value) that a dollar today &gt; a dollar tomorrow because today's dollar can be invested. Now apply that same logic in reverse: if a company will generate $100 in free cash next year, and you could instead earn 10% risk-free elsewhere, you'd pay at most $100/(1.10) = $90.91 for that $100 today. A share of stock is just this reasoning applied to every future year's expected cash flows, summed up. That sum is the stock's intrinsic value.
+          </div>
+
+          <div class="formula-box">
+            <div class="formula-label">Intrinsic Value of a Stock</div>
+            <div class="formula">V = FCF₁/(1+r)¹ + FCF₂/(1+r)² + ... + FCF_n/(1+r)^n + TV/(1+r)^n</div>
+            <div class="formula-label">where r = discount rate (WACC), TV = terminal value, n = forecast horizon</div>
+          </div>
+
+          <div class="rubric">
+            <div class="rubric-title">Map Rubric: equity-valuation (shaky → targeted)</div>
+            <ul>
+              <li>A stock's value rests on expected future cash flows discounted to today ← THE GAP</li>
+              <li>Multiples (like P/E) compare price to a fundamental quickly</li>
+              <li>Value depends on assumptions about growth, risk, and the discount rate</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">The 5-Step Pipeline</div>
+
+          <div class="step-flow">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <div class="step-title">Forecast FCF (years 1–N)</div>
+                Revenue projections → subtract costs, taxes, capex → free cash available to investors
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <div class="step-title">Choose Discount Rate (WACC)</div>
+                Blends cost of equity (CAPM) + cost of debt, weighted by capital structure. Reflects required return given risk.
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <div class="step-title">Terminal Value</div>
+                Captures all cash flows after year N. Dominates total value (60–80%). TV = FCF_N × (1+g) / (WACC - g)
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <div class="step-title">Discount to PV → Enterprise Value</div>
+                Sum of PV(FCF years 1..N) + PV(Terminal Value) = Enterprise Value (total firm value)
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-content">
+                <div class="step-title">→ Equity Value Per Share</div>
+                EV − Net Debt = Equity Value. Divide by shares outstanding = fair value per share.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Worked Example (simplified)</div>
+
+          <div class="example-box">
+            <p style="margin-bottom:10px; color:var(--text-muted)">Fictional company: FCF growing at 8%/yr for 5 years, then perpetuity growth 3%. WACC = 10%.</p>
+            <div class="ex-row"><span class="ex-label">Year 1 FCF</span><span class="ex-val">$100M → PV = $90.9M</span></div>
+            <div class="ex-row"><span class="ex-label">Year 2 FCF</span><span class="ex-val">$108M → PV = $89.3M</span></div>
+            <div class="ex-row"><span class="ex-label">Year 3 FCF</span><span class="ex-val">$117M → PV = $87.7M</span></div>
+            <div class="ex-row"><span class="ex-label">Year 4 FCF</span><span class="ex-val">$126M → PV = $86.1M</span></div>
+            <div class="ex-row"><span class="ex-label">Year 5 FCF</span><span class="ex-val">$136M → PV = $84.5M</span></div>
+            <div class="ex-row"><span class="ex-label">Sum of 5-yr PV</span><span class="ex-val">≈ $438M</span></div>
+            <div class="ex-row"><span class="ex-label">Terminal Value (yr 5)</span><span class="ex-val">$136M × 1.03 / (0.10−0.03) = $2,002M</span></div>
+            <div class="ex-row"><span class="ex-label">PV of Terminal Value</span><span class="ex-val">$2,002M / (1.10)^5 = $1,243M</span></div>
+            <div class="ex-row"><span class="ex-label">Enterprise Value</span><span class="ex-val">≈ $1,681M</span></div>
+            <div class="ex-row"><span class="ex-label">Terminal value as % of EV</span><span class="ex-val">74% — it dominates!</span></div>
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">P/E Multiples vs. DCF — Why Both Matter</div>
+
+          <div class="sourced">
+            P/E (Price-to-Earnings) is the most common multiple: stock price ÷ earnings per share. It's a shortcut: if similar companies trade at 20× earnings and this one earns $5/share, a rough valuation is $100/share. DCF is more rigorous but requires more assumptions. (Source: FMP article + FMP education resources)
+          </div>
+
+          <div class="illus">
+            P/E is a compressed DCF. When investors say "this stock is worth 20× earnings," they're implicitly assuming a certain growth rate, discount rate, and duration — they just haven't spelled them out. DCF makes those assumptions explicit and testable. The danger with P/E alone: the multiple can change (markets reprice risk premiums), but DCF grounds you in the actual cash the business generates. A stock might look "cheap" at 10× P/E but be expensive in DCF terms if earnings quality is poor or growth is declining.
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Risk & Return Connection (understood concept)</div>
+          <div class="illus">
+            The WACC is essentially your risk-return framework applied to a firm. A riskier firm (higher beta, uncertain cash flows) demands a higher WACC → each future dollar is discounted more aggressively → the stock is worth less today for the same projected cash flows. This is why high-growth tech companies with uncertain revenues trade at wide P/E ranges: a 1% change in WACC can move the DCF value by 20%+. The discount rate isn't a technicality — it is the risk-return tradeoff you already understand, applied to every dollar of future earnings.
+          </div>
+        </div>
+
+        <div class="warn">
+          DCF is extremely sensitive to terminal value assumptions. Since terminal value is typically 60–80% of total EV, a 0.5% change in the long-term growth rate <em>g</em> can swing valuation by 15–25%. Practitioners always run sensitivity tables: what if WACC is 9% vs. 11%? What if g is 2% vs. 4%? Never trust a single-point DCF without sensitivity analysis.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Deep dive generated 2026-06-23 · Investing subject<br>
+  Concept targeted: <strong>equity-valuation</strong> (shaky — state unchanged per rules; review via `test equity-valuation` to confirm mastery)<br>
+  Primary source: <a href="https://site.financialmodelingprep.com/discounted-cash-flow-blogs/walk-me-through-a-dcf-a-simple-guide-to-discounted-cash-flow-valuation" style="color:var(--accent)">FMP DCF Guide, Sanzhi Kobzhan, Nov 2025</a> ·
+  Supporting: <a href="https://online.hbs.edu/blog/post/discounted-cash-flow" style="color:var(--accent)">HBS DCF overview</a> ·
+  <a href="https://www.cfainstitute.org/insights/professional-learning/refresher-readings/2026/free-cash-flow-valuation" style="color:var(--accent)">CFA Institute FCF Valuation 2026</a>
+</footer>
+
+</body>
+</html>

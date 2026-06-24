@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Dive: Tariffs & Inflation (SF Fed, 2026)</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222638;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #2d3556;
+    --sourced: #1e3a2f;
+    --sourced-border: #34d399;
+    --illus: #1e2a3d;
+    --illus-border: #60a5fa;
+    --warn: #2d2010;
+    --warn-border: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Georgia', serif; font-size: 16px; line-height: 1.7; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px; }
+  .header-meta { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 6px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text); }
+  header .byline { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; }
+  header .byline a { color: var(--accent); }
+
+  .concepts-bar { background: var(--surface2); padding: 12px 32px; display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .concept-tag { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; letter-spacing: 0.5px; font-family: monospace; }
+  .concept-tag.new { background: #7c3aed; }
+  .concept-tag.known { background: #374151; color: var(--text-muted); }
+
+  .layout { max-width: 1200px; margin: 0 auto; padding: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .panel-header { background: var(--surface2); padding: 14px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); border-bottom: 1px solid var(--border); }
+  .panel-body { padding: 20px; }
+
+  .article-text { font-size: 0.95rem; line-height: 1.8; color: var(--text); }
+  .article-text h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin: 20px 0 8px; }
+  .article-text h3 { font-size: 1rem; font-weight: 700; color: var(--accent2); margin: 16px 0 6px; }
+  .article-text p { margin-bottom: 12px; }
+  .article-text ul { margin: 8px 0 12px 20px; }
+  .article-text li { margin-bottom: 6px; }
+  .article-text strong { color: #fdba74; }
+  .article-text em { color: var(--text-muted); }
+
+  .sourced { background: var(--sourced); border-left: 3px solid var(--sourced-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .sourced::before { content: "📄 SOURCED TRUTH"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--sourced-border); margin-bottom: 6px; }
+
+  .illus { background: var(--illus); border-left: 3px solid var(--illus-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .illus::before { content: "💡 ILLUSTRATION / MODEL"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--illus-border); margin-bottom: 6px; }
+
+  .warn { background: var(--warn); border-left: 3px solid var(--warn-border); padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.88rem; }
+  .warn::before { content: "⚠ CAVEAT / UNCERTAINTY"; display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--warn-border); margin-bottom: 6px; }
+
+  .concept-section { margin-bottom: 28px; }
+  .concept-title { font-size: 1rem; font-weight: 700; color: var(--accent2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .concept-title::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); }
+
+  .rubric { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-top: 12px; }
+  .rubric-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .rubric ul { margin-left: 16px; }
+  .rubric li { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+  .rubric li::marker { color: var(--accent); }
+
+  /* Phase diagram */
+  .phase-diagram { margin: 14px 0; }
+  .phase-row { display: flex; align-items: stretch; gap: 0; margin-bottom: 3px; }
+  .phase-label { width: 90px; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; padding-right: 8px; flex-shrink: 0; }
+  .phase-bar { height: 28px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 700; transition: width 0.3s; }
+  .phase-x { background: #1a2550; font-size: 10px; color: var(--text-muted); width: 100%; display: flex; gap: 0; align-items: stretch; }
+  .phase-neg { background: #1e3a2f; color: #34d399; }
+  .phase-pos { background: #3d1a1a; color: #f87171; }
+  .phase-neutral { background: #1e2a3d; color: #60a5fa; }
+
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before { content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; margin-bottom: 16px; }
+  .tl-item::before { content: ""; position: absolute; left: -17px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .tl-date { font-size: 11px; color: var(--accent); font-weight: 700; margin-bottom: 2px; }
+  .tl-text { font-size: 0.88rem; color: var(--text); }
+
+  .stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 10px 0; display: flex; gap: 16px; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  footer { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-meta">Economics · Deep Dive · 2026-06-23</div>
+  <h1>The Effects of Tariffs on the Components of Inflation</h1>
+  <div class="byline">
+    Primary source: <a href="https://www.frbsf.org/research-and-insights/publications/economic-letter/2026/03/effects-of-tariffs-on-components-of-inflation/" target="_blank">FRBSF Economic Letter 2026-07</a>
+    · Naomi Halbersleben, Òscar Jordà, Fernanda Nechio · Federal Reserve Bank of San Francisco · March 30, 2026
+  </div>
+</header>
+
+<div class="concepts-bar">
+  <span class="concept-tag">inflation</span>
+  <span class="concept-tag new">business-cycle ✦ encountered</span>
+  <span class="concept-tag known">monetary-policy (understood)</span>
+  <span class="concept-tag known">supply-demand (understood)</span>
+  <span class="concept-tag known">money (encountered)</span>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Original Article -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">📰 Original Article — Full Text</div>
+      <div class="panel-body article-text">
+
+        <p><em>Attribution: "The Effects of Tariffs on the Components of Inflation," FRBSF Economic Letter 2026-07, by Naomi Halbersleben, Òscar Jordà, and Fernanda Nechio. Federal Reserve Bank of San Francisco, March 30, 2026. Full text and PDF at <a href="https://www.frbsf.org/research-and-insights/publications/economic-letter/2026/03/effects-of-tariffs-on-components-of-inflation/" style="color:var(--accent)" target="_blank">frbsf.org</a>.</em></p>
+
+        <p>Tariffs are usually applied to imported goods—but in an interconnected economy, their effects can be felt in the prices of other goods and services. Estimates using data across multiple advanced economies show that <strong>inflation declines right after tariffs are imposed.</strong> This initial decline reflects decreased demand, visible in declining prices for energy such as oil, a primary commodity typically exempt from tariffs. After the initial tariff shock, inflation gradually picks up, driven first by goods and later by services, one of the more persistent categories of inflation.</p>
+
+        <h2>Background</h2>
+        <p>The United States announced a wide range of import tariffs on its trading partners in early 2025. In earlier work, the authors showed that immediately following an increase in tariff rates, the unemployment rate tends to increase and inflation tends to fall—the hallmark of a <strong>negative demand shock.</strong> In such a scenario, consumers spend less and the economy slows down, but inflation also declines. Over time, the economy recovers, but inflation rises above what it would have been if there had been no change in tariffs.</p>
+
+        <h2>Method</h2>
+        <p>The analysis uses 40+ years of data from 16 advanced economies (Australia, Belgium, Denmark, Finland, France, Germany, Italy, Japan, Netherlands, Norway, Portugal, Spain, Sweden, Switzerland, UK, US). The experiment models a <strong>10% increase in tariffs</strong> — close to estimates of the effective US tariff rate in 2025 (avg. 16.8% by Nov 2025, up from &lt;2% during 2000–2024).</p>
+
+        <h2>Tariffs and the Components of Inflation</h2>
+        <p>The study examines four CPI components: <strong>energy, goods, services,</strong> and <strong>core</strong> (ex food & energy).</p>
+
+        <h3>Energy (the initial drop)</h3>
+        <p>Energy prices decline considerably <em>on impact</em> before settling back down. Energy is not directly tariffed, but oil is an internationally traded commodity. A decline in energy prices reflects a <strong>shortfall of demand</strong> — a slowdown in economic activity both domestically and internationally, consistent with rising unemployment immediately after a tariff shock.</p>
+
+        <h3>Goods (slow build, peaks at year 2)</h3>
+        <p>Initially, there is not much evidence of a pickup in goods inflation. The negative effects of tariffs on demand offset the increase in the cost of imported goods. However, goods prices <strong>peak at year 2, increasing 1.2 percentage points on average</strong> for a 10% tariff increase, and remain elevated through year 3.</p>
+
+        <h3>Services (even slower, lingers)</h3>
+        <p>Although services are not directly exposed to tariffs, part of the tariff increase still passes through gradually. <strong>Services inflation peaks ~0.6 pp higher in year 3</strong> rather than year 2, and remains ~0.5 pp elevated by year 4. Services are stickier — they tend to linger.</p>
+
+        <h2>Implications for the U.S. Economy</h2>
+        <p>U.S. inflation continued to edge down in 2025, despite initial concerns. Our analysis suggests tariffs were associated with a reduction in U.S. economic activity, perhaps due to the rearrangement of supply chains and a wait-and-see attitude among investors and consumers. By end of 2025, the economy showed signs of resilience.</p>
+
+        <p><strong>Importantly, the inflationary effects of tariffs could show up with some delay, especially for services.</strong> Services correspond to ~60% of the U.S. CPI basket. Although the effects on services are about half the size of goods effects, they could have a relevant impact on overall inflation — and may linger.</p>
+
+        <div class="warn">
+          These estimates are based on 1980–2022 international data. The tariffs enacted since 2025 are <strong>unprecedented in magnitude and scope</strong>. Typical changes during the sample were much smaller. Interpret all quantitative figures with considerable caution. The authors state this explicitly.
+        </div>
+
+        <h2>Conclusion</h2>
+        <p>The textbook prediction that tariffs cause a <em>temporary</em> increase in inflation doesn't hold simply in practice. Instead: <strong>(1) initial demand contraction → inflation falls</strong>, then <strong>(2) supply-chain repricing and pass-through → inflation gradually rises</strong>, with goods first and services last. The slow burn of services inflation — the largest component of the CPI — is the lasting risk.</p>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Learning Context -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">🧠 Contextualized Learning</div>
+      <div class="panel-body">
+
+        <div class="concept-section">
+          <div class="concept-title">What is Inflation, really?</div>
+
+          <div class="sourced">
+            Inflation is a <strong>sustained rise in the overall price level</strong>, not a one-off price change. It reduces the purchasing power of money and is measured by indexes like the CPI (Consumer Price Index) or PCE (Personal Consumption Expenditures). Three main drivers: (1) demand-pull — too much spending chasing too few goods; (2) cost-push — rising input costs (wages, materials); (3) money growth — more money in circulation bidding up prices. (Source: Economics map rubric; consistent with article)
+          </div>
+
+          <div class="illus">
+            A one-off price rise is not inflation. If oil spikes for a month then recovers, that's a relative price shift — it changes what things cost relative to each other, not the overall level. Inflation means the average price level keeps rising period after period. The CPI tracks a "basket" of typical consumer purchases: food, housing, energy, cars, medical care, services. When that basket costs 3% more than last year, CPI inflation is 3%.
+          </div>
+
+          <div class="rubric">
+            <div class="rubric-title">Map Rubric: inflation</div>
+            <ul>
+              <li>Inflation is a sustained rise in the overall price level, not a one-off price change</li>
+              <li>It reduces the purchasing power of money and is measured by indexes like CPI</li>
+              <li>Demand-pull and cost-push pressures, and money growth, are the main drivers</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">The Two-Stage Tariff Mechanism</div>
+
+          <div class="sourced">
+            Stage 1 (impact, ~year 0–1): Tariffs inject uncertainty → demand contracts → energy prices drop → headline inflation falls. This is a <strong>negative demand shock.</strong> Stage 2 (gradual, years 1–4): Firms absorb then pass through higher input costs → goods inflation rises (peak yr 2, +1.2 pp per 10% tariff) → services inflation follows and lingers (peak yr 3, +0.6 pp). (Source: FRBSF article, figures 1–3)
+          </div>
+
+          <!-- Phase diagram -->
+          <div class="phase-diagram">
+            <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">Effect of a 10% tariff on each CPI component over time (stylized from article Figs 1–3):</p>
+            <div style="display:grid; grid-template-columns: 80px 1fr; gap:4px; align-items:center; font-size:11px;">
+              <div style="color:var(--text-muted)">Energy</div>
+              <div style="display:flex; gap:2px; align-items:center;">
+                <div style="background:#1e3a2f;color:#34d399;padding:4px 8px;border-radius:4px;width:50px;text-align:center;">↓ Yr 0</div>
+                <div style="background:#1e2a3d;color:#60a5fa;padding:4px 8px;border-radius:4px;flex:1;text-align:center;">→ recovers</div>
+              </div>
+              <div style="color:var(--text-muted)">Goods</div>
+              <div style="display:flex; gap:2px; align-items:center;">
+                <div style="background:#1e2a3d;color:#60a5fa;padding:4px 8px;border-radius:4px;width:50px;text-align:center;">~ Yr 0-1</div>
+                <div style="background:#3d1a1a;color:#f87171;padding:4px 8px;border-radius:4px;width:70px;text-align:center;">↑+1.2pp Yr2</div>
+                <div style="background:#3d1a1a;color:#f87171;padding:4px 8px;border-radius:4px;flex:1;text-align:center;">elevated Yr3</div>
+              </div>
+              <div style="color:var(--text-muted)">Services</div>
+              <div style="display:flex; gap:2px; align-items:center;">
+                <div style="background:#1e2a3d;color:#60a5fa;padding:4px 8px;border-radius:4px;flex:0 0 90px;text-align:center;">~ Yr 0-2</div>
+                <div style="background:#3d1a1a;color:#f87171;padding:4px 8px;border-radius:4px;flex:1;text-align:center;">↑+0.6pp Yr3–4 (sticky)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="illus">
+            Why does demand fall first? Tariffs create uncertainty. Firms don't immediately know their new cost structure. Consumers see news about trade wars and hold back spending. Importers rush to stockpile pre-tariff inventory (front-loading), which temporarily reduces current demand. Only once inventories deplete and firms revise prices does the inflationary signal emerge — hence the lag. This is the supply-and-demand mechanism played out over time.
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Connecting to Supply & Demand (understood)</div>
+
+          <div class="illus">
+            You know supply & demand shifts equilibrium. Here the tariff acts like a <strong>supply shock</strong> to imported goods (it raises the cost curve for goods that rely on imports), but simultaneously also a <strong>negative demand shock</strong> via uncertainty. These two forces partly cancel in the short run: higher costs push prices up; reduced demand pulls them down. The demand effect dominates initially (hence falling inflation). Over time, demand recovers but costs remain elevated, so goods prices rise. The interplay of these two curves explains the two-stage dynamic.
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Business Cycle connection</div>
+
+          <div class="sourced">
+            The article finds tariffs are consistent with a negative demand shock: unemployment rises, inflation falls initially — hallmarks of a <strong>contraction phase</strong> in the business cycle. Later, as the economy adapts, activity and inflation recover. This maps to the expansion→peak→contraction→trough→expansion cycle. (Source: FRBSF article + earlier Halbersleben et al. 2025 findings on unemployment)
+          </div>
+
+          <div class="rubric">
+            <div class="rubric-title">Map Rubric: business-cycle (newly encountered)</div>
+            <ul>
+              <li>Economies move through expansion, peak, contraction, and trough phases</li>
+              <li>A recession is a significant, broad decline in activity (often falling real GDP)</li>
+              <li>Cycles are driven by swings in demand, credit, and expectations</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Current US Context (2026)</div>
+
+          <div class="sourced">
+            As of early 2026: US average tariff rate ~16.8% (vs. &lt;2% before 2025). Fed research shows tariffs raised core goods PCE prices by ~3.1% through February 2026. The Fed maintained reserve rates at 3.65% in March 2026. CBO projects PCE inflation at 2.7% in 2026; some analysts warn of upside risk if services pass-through accelerates. (Sources: Dallas Fed May 2026; FOMC minutes March/April 2026; CBO outlook 2026)
+          </div>
+
+          <div class="stat-box">
+            <div class="stat"><div class="stat-num">16.8%</div><div class="stat-label">US avg. tariff rate Nov 2025</div></div>
+            <div class="stat"><div class="stat-num">3.1%</div><div class="stat-label">Core goods PCE rise (tariff-attributed, thru Feb 2026)</div></div>
+            <div class="stat"><div class="stat-num">2.7%</div><div class="stat-label">CBO PCE inflation forecast 2026</div></div>
+            <div class="stat"><div class="stat-num">3.65%</div><div class="stat-label">Fed reserve rate (March 2026)</div></div>
+          </div>
+
+          <div class="warn">
+            The article's sample covers 1980–2022, when tariff changes were small and routine. The 2025 tariff shock is unprecedented in scale. The authors themselves warn to interpret quantitative estimates with caution. Services inflation in the US could surprise in either direction. Monetary policy response adds further complexity — a factor the model doesn't fully capture.
+          </div>
+        </div>
+
+        <div class="concept-section">
+          <div class="concept-title">Monetary Policy Link (understood concept)</div>
+          <div class="sourced">
+            The article notes a "complicated dance between the lags of monetary policy and the implications of trade policy for inflation." If services inflation stays elevated for 3–4 years after a tariff shock, the Fed must decide whether to tighten (risking a deeper recession) or wait (risking entrenched inflation). This is exactly the dual-mandate tension — price stability vs. maximum employment — that monetary policy is designed to navigate. (Source: FRBSF article; consistent with Economics map: monetary-policy concept)
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Deep dive generated 2026-06-23 · Economics subject<br>
+  Concepts updated: <strong>inflation</strong> (last_reviewed refreshed) · <strong>business-cycle</strong> (unseen → encountered)<br>
+  Primary source: <a href="https://www.frbsf.org/research-and-insights/publications/economic-letter/2026/03/effects-of-tariffs-on-components-of-inflation/" style="color:var(--accent)">FRBSF Economic Letter 2026-07, Halbersleben, Jordà, Nechio</a>
+</footer>
+
+</body>
+</html>

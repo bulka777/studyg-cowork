@@ -1,1 +1,9 @@
-deep_dives: []
+deep_dives:
+  - id: dcf-equity-valuation
+    file: deep-dives/dcf-equity-valuation.html
+    generated: 2026-06-23
+    source_url: https://site.financialmodelingprep.com/discounted-cash-flow-blogs/walk-me-through-a-dcf-a-simple-guide-to-discounted-cash-flow-valuation
+    source_title: "Walk Me Through a DCF: A Simple Guide to Discounted Cash Flow Valuation"
+    concepts: [equity-valuation, money-time-value]
+    cards_minted: false
+    summary: "DCF 5-step pipeline: forecast FCF, determine WACC, calculate terminal value (60-80% of EV), discount to PV, derive equity value per share. Targets the shaky misconception: stock price = PV of future cash flows."

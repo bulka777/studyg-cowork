@@ -17,8 +17,8 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: knowledge-graphs
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: vector-similarity
     state: unseen
@@ -49,8 +49,8 @@ mastery:
     last_reviewed: null
     misconceptions: []
   - id: graph-rag
-    state: unseen
-    last_reviewed: null
+    state: encountered
+    last_reviewed: 2026-06-23
     misconceptions: []
   - id: chunking-strategies
     state: unseen
